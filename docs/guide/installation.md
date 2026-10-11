@@ -54,7 +54,7 @@ Development builds are automatically generated from the latest commits and may i
 
 ### Customization
 - **Owner Alias** — Set a custom display name to replace your Minecraft username
-- **Claim Colors** — Pick a custom hex color for your claim used on maps and borders
+- **Claim Colors** — Pick a custom hex color for your native claim boundary visualization
 - **Visualization Modes** — Toggle between Display Entity or Particle-based boundary rendering
 - **Entry/Exit Titles** — Custom MiniMessage-formatted titles shown when players enter or leave
 - **Rename Claims** — Change your claim's display name at any time
@@ -63,10 +63,6 @@ Development builds are automatically generated from the latest commits and may i
 ---
 
 ## Supported Integrations
-
-### Web Map Plugins
-Visualize claims directly on your server's web map as colored polygons with owner info.
-- **BlueMap** · **Dynmap** · **Squaremap** · **Pl3xMap**
 
 ### Combat Tagger Plugins
 Prevent players from abusing claim commands while in combat.

@@ -21,6 +21,7 @@ import org.ayosynk.landClaimPlugin.config.menus.OnlinePlayerSelectorConfig;
 import org.ayosynk.landClaimPlugin.config.menus.ProfileSelectorConfig;
 import org.ayosynk.landClaimPlugin.config.menus.RenameClaimConfig;
 import org.ayosynk.landClaimPlugin.config.menus.ChangeClaimColorConfig;
+import org.ayosynk.landClaimPlugin.config.menus.TopClaimsConfig;
 import java.io.File;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class ConfigManager {
     private PluginConfig pluginConfig;
     private MessagesConfig messagesConfig;
     private MainMenuConfig mainMenuConfig;
+    private TopClaimsConfig topClaimsConfig;
     private ManageMenuConfig manageMenuConfig;
     private VisitorManagementConfig visitorManagementConfig;
     private ClaimSettingsConfig claimSettingsConfig;
@@ -86,6 +88,14 @@ public class ConfigManager {
             it.load();
         });
         normalizeLegacyMainMenuLabels();
+        normalizeMainMenuLayout();
+
+        this.topClaimsConfig = eu.okaeri.configs.ConfigManager.create(TopClaimsConfig.class, (it) -> {
+            it.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
+            it.withBindFile(new File(plugin.getDataFolder(), "menus/TopClaims.yml"));
+            it.saveDefaults();
+            it.load();
+        });
 
         this.manageMenuConfig = eu.okaeri.configs.ConfigManager.create(ManageMenuConfig.class, (it) -> {
             it.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
@@ -121,6 +131,7 @@ public class ConfigManager {
             it.saveDefaults();
             it.load();
         });
+        normalizeLegacyFlagLayout();
 
         // Ensure new flags exist to fix backward compatibility for servers updating from older versions
         if (!visitorSettingsConfig.flags.containsKey("CLAIM_LAND")) {
@@ -198,10 +209,13 @@ public class ConfigManager {
         messagesConfig.load();
         mainMenuConfig.load();
         normalizeLegacyMainMenuLabels();
+        normalizeMainMenuLayout();
+        topClaimsConfig.load();
         manageMenuConfig.load();
         visitorManagementConfig.load();
         claimSettingsConfig.load();
         visitorSettingsConfig.load();
+        normalizeLegacyFlagLayout();
         trustManagementConfig.load();
         memberManagementConfig.load();
         playerControlPanelConfig.load();
@@ -227,6 +241,91 @@ public class ConfigManager {
         }
     }
 
+    private void normalizeMainMenuLayout() {
+        if (mainMenuConfig.layout == null || mainMenuConfig.layout.stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(row -> java.util.Arrays.stream(row.trim().split("\\s+")))
+                .anyMatch("C"::equals)) {
+            return;
+        }
+        List<String> rows = new java.util.ArrayList<>(mainMenuConfig.layout);
+        boolean placed = false;
+        for (int rowIndex = 0; rowIndex < rows.size() && !placed; rowIndex++) {
+            String[] slots = rows.get(rowIndex).trim().split("\\s+");
+            for (int slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+                if (".".equals(slots[slotIndex])) {
+                    slots[slotIndex] = "C";
+                    rows.set(rowIndex, String.join(" ", slots));
+                    placed = true;
+                    break;
+                }
+            }
+        }
+        for (int rowIndex = 0; rowIndex < rows.size() && !placed; rowIndex++) {
+            String[] slots = rows.get(rowIndex).trim().split("\\s+");
+            for (int slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+                if ("1".equals(slots[slotIndex]) || "2".equals(slots[slotIndex])) {
+                    slots[slotIndex] = "C";
+                    rows.set(rowIndex, String.join(" ", slots));
+                    plugin.getLogger().warning(
+                            "Added the Top Claims button to the first available filler slot in the main menu layout.");
+                    placed = true;
+                    break;
+                }
+            }
+        }
+        if (!placed) {
+            plugin.getLogger().warning(
+                    "The main menu layout has no free slot for Top Claims; add a C slot to menus/mainmenu.yml.");
+            return;
+        }
+        mainMenuConfig.layout = rows;
+    }
+
+    private void normalizeLegacyFlagLayout() {
+        if (visitorSettingsConfig.layout == null) {
+            return;
+        }
+        List<String> rows = new java.util.ArrayList<>(visitorSettingsConfig.layout);
+        boolean selectorFound = rows.stream().filter(java.util.Objects::nonNull)
+                .flatMap(row -> java.util.Arrays.stream(row.trim().split("\\s+")))
+                .anyMatch("C"::equals);
+        boolean changed = false;
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            String[] slots = rows.get(rowIndex).trim().split("\\s+");
+            for (int slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+                if ("R".equals(slots[slotIndex]) || "T".equals(slots[slotIndex])
+                        || "V".equals(slots[slotIndex])) {
+                    slots[slotIndex] = selectorFound ? "." : "C";
+                    selectorFound = true;
+                    changed = true;
+                }
+            }
+            rows.set(rowIndex, String.join(" ", slots));
+        }
+        if (!selectorFound) {
+            for (int rowIndex = 0; rowIndex < rows.size() && !selectorFound; rowIndex++) {
+                String[] slots = rows.get(rowIndex).trim().split("\\s+");
+                for (int slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+                    if (".".equals(slots[slotIndex]) || "F".equals(slots[slotIndex])) {
+                        slots[slotIndex] = "C";
+                        rows.set(rowIndex, String.join(" ", slots));
+                        selectorFound = true;
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            if (!selectorFound) {
+                plugin.getLogger().warning(
+                        "The Flags layout has no free slot for the category selector; add a C slot to menus/VisitorSettings.yml.");
+            }
+        }
+        if (changed) {
+            visitorSettingsConfig.layout = rows;
+        }
+    }
+
     public PluginConfig getPluginConfig() {
         return pluginConfig;
     }
@@ -237,6 +336,10 @@ public class ConfigManager {
 
     public MainMenuConfig getMainMenuConfig() {
         return mainMenuConfig;
+    }
+
+    public TopClaimsConfig getTopClaimsConfig() {
+        return topClaimsConfig;
     }
 
     public ManageMenuConfig getManageMenuConfig() {

@@ -87,20 +87,6 @@ Changes to `blockWorld` and `blockCmd` take effect immediately on server startup
 | `redis.password` | String | `""` | Redis password (empty = no auth) |
 | `redis.channel` | String | `landclaim:sync` | Pub/sub channel name |
 
-### Map Integrations
-
-Each map plugin has identical configuration:
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `<map>.enabled` | Boolean | `true` | Enable this map hook |
-| `<map>.fillColor` | String | `3366FF` | Fill color (hex) |
-| `<map>.fillOpacity` | Double | `0.3` | Fill opacity (0.0-1.0) |
-| `<map>.borderColor` | String | `3366FF` | Border color (hex) |
-| `<map>.borderOpacity` | Double | `0.8` | Border opacity (0.0-1.0) |
-
-Supported maps: `dynmap`, `bluemap`, `squaremap`, `pl3xmap`
-
 ### Visualization & Action Bar
 
 | Key | Type | Default | Description |
@@ -120,6 +106,10 @@ The in-game Territory Map has been removed. These legacy settings may remain in 
 | `minimap.itemName` | String | `<gold><bold>Territory Map</bold></gold>` | Display name for the Territory Map item (MiniMessage format) |
 | `minimap.itemLore` | List | `[...]` | Description and instruction lore lines for the map item |
 
+### Removed Web Map Integrations
+
+BlueMap, Dynmap, Squaremap, and Pl3xMap integrations have been removed. Their settings may remain in existing `config.yml` files, but are no longer read.
+
 ### Update Checker
 
 | Key | Type | Default | Description |
@@ -132,18 +122,10 @@ The in-game Territory Map has been removed. These legacy settings may remain in 
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `geyserForms` | Boolean | `true` | When Geyser 2.x is installed, Bedrock players receive native Bedrock forms (CustomForm text input for renames/colors, ModalForm confirmations for abandon/ban/unclaim-all) instead of Java-only chat-prompt fallbacks. If Geyser is not installed, this option has no effect. |
+| `geyserForms` | Boolean | `true` | When Geyser forms are available, Bedrock players receive native CustomForms for supported text input and ModalForms for confirmations. Disabling this setting or lacking the API falls back to inventory confirmations and the existing chat prompt for text input. |
 
 ::: tip
 Geyser-Spigot and Floodgate are listed in `soft-depend` so the server attempts to load them before LandClaimPlugin. The Bedrock form code is reflection-based — it does not introduce a hard dependency on either plugin.
-:::
-
-::: note Map plugins
-The `squaremap` and `Pl3xMap` hooks both wait for the corresponding plugin's `PluginEnableEvent` and retry their API call on the next tick if the API isn't ready yet. Markers should appear automatically after a `/claim reload` or after a fresh claim. If you do not see your claims on the live map:
-
-1. Confirm the world is enabled in your map plugin's config (e.g. `squaremap/config.yml`'s `worlds:` section).
-2. Confirm the chunk is in the same Bukkit world name the map plugin reports (the plugin handles `minecraft:world` ↔ `world` automatically).
-3. Run `/claim admin reload` to force a full map refresh.
 :::
 
 ### Wilderness Protection
@@ -341,11 +323,12 @@ GUI menus are configured via YAML files in the `plugins/LandClaimPlugin/menus/` 
 - **Materials** — Item types for buttons, fillers, and navigation
 - **Display Names** — MiniMessage-formatted text for all items
 - **Lore** — Item descriptions and instructions
-- **Layout** — Main, Manage, Flags, Residents, Trusted, Claim Settings, Player Control, Profile Selector, Online Player Selector, Claim Color, Rename Claim, and Title Settings menus support configurable `rows` and a nine-slot-wide `layout` list. `x` marks list/content slots, `P` and `N` mark previous/next page buttons, and `.` leaves a slot empty; other characters map to the menu's configured items.
+- **Layout** — Main, Manage, Flags, Residents, Trusted, Claim Settings, Player Control, Profile Selector, Online Player Selector, Claim Color, Rename Claim, Title Settings, and Top Claims menus support configurable `rows` and a nine-slot-wide `layout` list. `x` marks list/content slots, `P` and `N` mark previous/next page buttons, and `.` leaves a slot empty; other characters map to the menu's configured items.
 - **Item models** — Items in those menus support optional `item_model` namespaced keys (for example, `minecraft:custom_item`).
 
 Available menu configs:
 - `mainmenu.yml` — Main claim management GUI
+- `TopClaims.yml` — Ten largest claim profiles and the viewing profile's rank
 - `Manage.yml` — Resident, Trusted, and Visitor role entry points
 - `VisitorSettings.yml` — Role-category flags
 - `MemberManagement.yml` — Resident list and invitation controls
@@ -356,11 +339,15 @@ Available menu configs:
 - `VisitorManagement.yml` — Online Visitor list
 - Other menu layouts still use their built-in structures.
 
+`TopClaims.yml` requires exactly ten `x` entry slots, one `V` viewer panel, and one `B` back slot. Entry heads use the profile owner as their skin source; supported placeholders are `{rank}`, `{claim_name}`, `{owner}`, and `{chunks}`. The `entry.item_model` field can override the head's item model.
+
+The Flags menu has a single `C` category selector. It cycles Resident → Trusted → Visitor → Resident; opening the menu starts on Visitor. Older `R`, `T`, and `V` selector slots are automatically consolidated on load.
+
 Example `mainmenu.yml` layout:
 ```yaml
 rows: 3
 layout:
   - "1 1 2 2 2 2 2 1 1"
-  - "1 . . S T V . . 1"
+  - "1 . . S T V C . 1"
   - "2 2 2 2 2 2 2 2 2"
 ```

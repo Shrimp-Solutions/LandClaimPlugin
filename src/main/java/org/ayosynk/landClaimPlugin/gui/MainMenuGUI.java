@@ -73,6 +73,10 @@ public class MainMenuGUI {
                                                 }
                                                 VisitorSettingsGUI.open(p, profile, plugin, "visitor");
                                         }));
+                        ingredients.put('C', GuiHelper.buildSlot(config.topClaims.material, config.topClaims.name,
+                                        config.topClaims.lore, profile, player, ownerName, claimName,
+                                        config.topClaims.itemModel, (p, e) ->
+                                                TopClaimsGUI.open(p, profile, plugin)));
 
                         String windowTitle = config.title.replace("{claim_name}", claimName);
                         Component title = GuiHelper.MM.deserialize(windowTitle);
@@ -84,7 +88,7 @@ public class MainMenuGUI {
         }
 
         private static String[] validateLayout(MainMenuConfig config, LandClaimPlugin plugin) {
-                Set<String> allowedSlots = Set.of("1", "2", "S", "T", "V", ".");
+                Set<String> allowedSlots = Set.of("1", "2", "S", "T", "V", "C", ".");
                 if (config.rows < 1 || config.rows > 6 || config.layout == null
                                 || config.layout.size() != config.rows) {
                         plugin.getLogger().severe("Invalid main menu layout: rows must be 1-6 and match the layout list.");

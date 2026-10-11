@@ -5,11 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.synkfr</groupId>
-    <artifactId>LandClaimPlugin</artifactId>
-    <version>3.4.0</version>
+    <artifactId>moeClaims</artifactId>
+    <version>v26.1</version>
     <packaging>jar</packaging>
 
-    <name>LandClaimPlugin</name>
+    <name>moeClaims</name>
+
+    <developers>
+        <developer>
+            <name>rouamy</name>
+        </developer>
+    </developers>
 
     <properties>
         <java.version>25</java.version>
@@ -112,14 +118,6 @@
             <url>https://maven.enginehub.org/repo/</url>
         </repository>
         <repository>
-            <id>bluecolored</id>
-            <url>https://repo.bluecolored.de/releases</url>
-        </repository>
-        <repository>
-            <id>dynmap-repo</id>
-            <url>https://repo.mikeprimm.com/</url>
-        </repository>
-        <repository>
             <id>okaeri-releases</id>
             <url>https://repo.okaeri.cloud/releases</url>
         </repository>
@@ -197,32 +195,6 @@
             <artifactId>jedis</artifactId>
             <version>${jedis.version}</version>
             <scope>compile</scope>
-        </dependency>
-
-        <!-- Map Hooks -->
-        <dependency>
-            <groupId>de.bluecolored</groupId>
-            <artifactId>bluemap-api</artifactId>
-            <version>2.7.8</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>us.dynmap</groupId>
-            <artifactId>DynmapCoreAPI</artifactId>
-            <version>3.7-beta-6</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>xyz.jpenilla</groupId>
-            <artifactId>squaremap-api</artifactId>
-            <version>1.3.11</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>maven.modrinth</groupId>
-            <artifactId>pl3xmap</artifactId>
-            <version>1.21.5-527</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Combat & Protection Hooks -->

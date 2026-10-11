@@ -177,8 +177,6 @@ public class LandClaimAPIImpl implements LandClaimAPI {
         getClaimManager().saveAndSync(adminProfile);
 
         plugin.getVisualizationManager().invalidateCache(adminProfile.getProfileId());
-        plugin.getHookManager().refreshMapHooks();
-
         return true;
     }
 

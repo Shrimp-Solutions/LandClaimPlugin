@@ -23,8 +23,6 @@ features:
     details: Owner, Resident, Trusted, and Visitor categories with profile-specific flags.
   - title: 🎨 Full Customization
     details: Customize everything from colors and names to entry titles — completely configurable via YAML.
-  - title: 🗺️ Map Integrations
-    details: Render claims on BlueMap, Dynmap, Squaremap, and Pl3xMap.
   - title: 🚫 Claim Bans
     details: Hard-deny a player from entering or interacting with your claim. Banned players are pushed back at chunk boundaries and (if online) teleported outside.
   - title: 🎮 Bedrock / Geyser Support

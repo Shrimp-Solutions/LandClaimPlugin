@@ -1,7 +1,7 @@
 package org.ayosynk.landClaimPlugin.commands;
 
 import org.ayosynk.landClaimPlugin.util.FoliaScheduler;
-import org.ayosynk.landClaimPlugin.util.GeyserFormHelper;
+import org.ayosynk.landClaimPlugin.gui.ConfirmationGUI;
 import org.ayosynk.landClaimPlugin.LandClaimPlugin;
 import org.ayosynk.landClaimPlugin.managers.ClaimManager;
 import org.ayosynk.landClaimPlugin.managers.ConfigManager;
@@ -92,19 +92,11 @@ public class UnclaimCommand implements LandClaimCommand {
     }
 
     private void promptUnclaimAll(Player player) {
-        if (GeyserFormHelper.shouldUseForms(player)) {
-            String title = configManager.getMessage("geyser-confirm-title");
-            String content = configManager.getMessage("geyser-unclaim-all-content");
-            GeyserFormHelper.sendModalForm(player, title, content, "Confirm", "Cancel", confirmed -> {
-                if (!confirmed) {
-                    player.sendMessage(configManager.getMessage("geyser-form-cancelled"));
-                    return;
-                }
-                FoliaScheduler.runForPlayer(plugin, player, () -> performUnclaimAll(player));
-            });
-        } else {
-            player.sendMessage(configManager.getMessage("unclaim-all-confirm"));
-        }
+        ConfirmationGUI.open(player,
+                configManager.getMessage("geyser-confirm-title"),
+                configManager.getMessage("geyser-unclaim-all-content"),
+                () -> FoliaScheduler.runForPlayer(plugin, player, () -> performUnclaimAll(player)),
+                null);
     }
 
     private void performUnclaimAll(Player player) {
@@ -121,7 +113,6 @@ public class UnclaimCommand implements LandClaimCommand {
         player.sendMessage(configManager.getMessage("profile-abandoned",
                 "<chunks>", String.valueOf(chunks)));
         plugin.getVisualizationManager().invalidateCache(profile.getProfileId());
-        plugin.getHookManager().refreshMapHooks();
         plugin.getListenerManager().getEventListener().updatePlayerClaimCache(player);
     }
 

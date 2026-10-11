@@ -44,7 +44,7 @@ public class ClaimSettingsConfig extends OkaeriConfig {
             "BRUSH",
             "<light_purple>Change Claim Color",
             List.of(
-                    "<gray>Change the display color for map integrations."));
+                    "<gray>Change the color used by the native claim visualization."));
 
     @Comment("PvP Toggle Button")
     public ItemConfig pvpToggle = new ItemConfig(
@@ -59,7 +59,7 @@ public class ClaimSettingsConfig extends OkaeriConfig {
             "ECHO_SHARD",
             "<blue>Claim Visibility",
             List.of(
-                    "<gray>Toggle claim visibility on web maps."));
+                    "<gray>Toggle whether claim boundaries are visible to other players."));
 
     @Comment("Title Toggle Button")
     public ItemConfig titleToggle = new ItemConfig(

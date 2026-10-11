@@ -26,6 +26,11 @@ public class VisitorSettingsGUI {
         }
 
         public static void open(Player player, ClaimProfile profile, LandClaimPlugin plugin, String category) {
+                open(player, profile, plugin, category, 0);
+        }
+
+        private static void open(Player player, ClaimProfile profile, LandClaimPlugin plugin, String category,
+                        int page) {
                 String role = category.toLowerCase(java.util.Locale.ROOT);
                 if (!role.equals("resident") && !role.equals("trusted") && !role.equals("visitor")) {
                         throw new IllegalArgumentException("Unknown flag category: " + category);
@@ -123,18 +128,24 @@ public class VisitorSettingsGUI {
                                         GuiHelper.buildItemStack(config.back.material, config.back.name,
                                                         config.back.lore, config.back.itemModel),
                                         (p, e) -> ManageGUI.open(p, profile, plugin)));
-                        ingredients.put('R', GuiHelper.buildSlot(config.residentCategory.material,
-                                        config.residentCategory.name, config.residentCategory.lore,
-                                        config.residentCategory.itemModel, (p, e) ->
-                                                VisitorSettingsGUI.open(p, profile, plugin, "resident")));
-                        ingredients.put('T', GuiHelper.buildSlot(config.trustedCategory.material,
-                                        config.trustedCategory.name, config.trustedCategory.lore,
-                                        config.trustedCategory.itemModel, (p, e) ->
-                                                VisitorSettingsGUI.open(p, profile, plugin, "trusted")));
-                        ingredients.put('V', GuiHelper.buildSlot(config.visitorCategory.material,
-                                        config.visitorCategory.name, config.visitorCategory.lore,
-                                        config.visitorCategory.itemModel, (p, e) ->
-                                                VisitorSettingsGUI.open(p, profile, plugin, "visitor")));
+                        VisitorSettingsConfig.ItemConfig selector = switch (role) {
+                                case "resident" -> config.residentCategory;
+                                case "trusted" -> config.trustedCategory;
+                                default -> config.visitorCategory;
+                        };
+                        ingredients.put('C', GuiHelper.buildSlot(selector.material, selector.name,
+                                        selector.lore, selector.itemModel, (p, e) -> {
+                                                String nextRole = switch (role) {
+                                                        case "resident" -> "trusted";
+                                                        case "trusted" -> "visitor";
+                                                        default -> "resident";
+                                                };
+                                                int currentPage = e.getView().getTopInventory()
+                                                                .getHolder() instanceof PaginatedGui currentGui
+                                                                                ? currentGui.getCurrentPage()
+                                                                                : page;
+                                                VisitorSettingsGUI.open(p, profile, plugin, nextRole, currentPage);
+                                        }));
 
                         Component title = GuiHelper.MM.deserialize(config.title + " <gray>(" + role + ")");
                         PaginatedGui gui = new PaginatedGui(title, config.rows, structure, ingredients, 'x');
@@ -151,13 +162,16 @@ public class VisitorSettingsGUI {
                                                         config.bottomFill.lore, config.bottomFill.itemModel));
 
                         gui.setContent(contentItems, player);
+                        if (page > 0) {
+                                gui.setPage(page, player);
+                        }
                         gui.open(player);
                 });
         }
 
         private static String[] validateLayout(VisitorSettingsConfig config, LandClaimPlugin plugin) {
                 return GuiLayoutValidator.validate(config.rows, config.layout,
-                        Set.of("F", "R", "T", "V", "B", "P", "N", "x", "."),
+                        Set.of("F", "C", "B", "P", "N", "x", "."),
                         "P", "N", "Flags", plugin);
         }
 

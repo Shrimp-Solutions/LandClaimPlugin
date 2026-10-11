@@ -34,7 +34,7 @@ LandClaimPlugin (entry point)
 8. Business logic managers (Combat, Claim, Visualization, legacy warp migration)
 9. CommandHandler (Cloud framework + thread pool)
 10. ListenerManager (all Bukkit listeners)
-11. HookManager (WorldGuard, BlueMap, Dynmap, etc.)
+11. HookManager (WorldGuard, PlaceholderAPI)
 ```
 
 ### Shutdown (`onDisable`)
@@ -212,7 +212,7 @@ ClaimManager (business logic + validation)
     ↓
 CacheManager (Caffeine in-memory) → DatabaseManager (async DB writes)
     ↓                              → RedisManager (pub/sub to other servers)
-HookManager (refresh map hooks)
+HookManager (optional WorldGuard and PlaceholderAPI integrations)
 ```
 
 ## Threading Model

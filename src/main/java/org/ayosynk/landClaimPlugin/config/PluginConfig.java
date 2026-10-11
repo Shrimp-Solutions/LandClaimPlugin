@@ -66,25 +66,6 @@ public class PluginConfig extends OkaeriConfig {
     @Comment("Cooldown in seconds for the /claim unstuck command to prevent spamming.")
     public int cooldownUnstuck = 30;
 
-    @Comment("Integration settings for web-based live maps (Dynmap, BlueMap, Squaremap, Pl3xmap).")
-    public MapConfig dynmap = new MapConfig();
-    public MapConfig bluemap = new MapConfig();
-    public MapConfig squaremap = new MapConfig();
-    public MapConfig pl3xmap = new MapConfig();
-
-    public static class MapConfig extends OkaeriConfig {
-        @Comment("Enable/disable this specific map integration.")
-        public boolean enabled = true;
-        @Comment("Fill color for the claim areas on the map (Hex color code without #).")
-        public String fillColor = "3366FF";
-        @Comment("Fill opacity for the claim areas on the map (0.0 = fully transparent, 1.0 = fully solid).")
-        public double fillOpacity = 0.3;
-        @Comment("Border color for the claim areas on the map (Hex color code without #).")
-        public String borderColor = "3366FF";
-        @Comment("Border opacity for the claim areas on the map (0.0 = fully transparent, 1.0 = fully solid).")
-        public double borderOpacity = 0.8;
-    }
-
     @Comment({
         "Wilderness Protection",
         "When enabled, the flags listed in 'deniedFlags' are blocked in unclaimed",

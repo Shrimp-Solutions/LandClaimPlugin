@@ -87,8 +87,8 @@ public class LandClaimPlugin extends JavaPlugin implements LandClaimAPI {
             listenerManager = new ListenerManager(this, claimManager, configManager, visualizationManager);
             listenerManager.registerAll();
 
-            // 9. Initialize third-party plugins (WorldGuard, Maps)
-            hookManager = new HookManager(this, claimManager, configManager);
+            // 9. Initialize optional third-party integrations
+            hookManager = new HookManager(this);
             hookManager.init();
 
             claimDecayManager = new ClaimDecayManager(this, claimManager, configManager);
@@ -197,9 +197,6 @@ public class LandClaimPlugin extends JavaPlugin implements LandClaimAPI {
 
     public void reloadPlugin() {
         configManager.reloadMainConfig();
-        if (hookManager != null) {
-            hookManager.refreshMapHooks();
-        }
         if (visualizationManager != null) {
             for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
                 visualizationManager.invalidateCache(p.getUniqueId());

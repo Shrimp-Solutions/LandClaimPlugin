@@ -130,9 +130,6 @@ public class ChangeClaimColorGUI {
                 profile.setClaimColor(hex);
                 plugin.getDatabaseManager().getProfileDao().saveProfile(profile);
 
-                // Refresh map hooks
-                plugin.getHookManager().refreshMapHooks();
-
                 // Refresh visualization if active
                 plugin.getVisualizationManager().invalidateCache(profile.getProfileId());
 
