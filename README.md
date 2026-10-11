@@ -69,8 +69,9 @@ A powerful, feature-rich chunk-based land protection plugin for Paper servers. C
 - **Wilderness Protection** — Opt-in `wildernessProtection.enabled` flag flips the default: players can only build/break inside claims, never in unclaimed chunks. Designed for clan/town-style servers.
 
 ### Customization
-- **Owner Alias** — Set a custom display name to replace your Minecraft username in UI elements, map hooks, and titles
-- **Claim Colors** — Pick a custom hex color for your claim used on maps and borders
+- **Owner Alias** — Set a custom display name to replace your Minecraft username in UI elements and titles
+- **Claim Colors** — Pick a custom hex color for your native claim boundary visualization
+- **Top Claims Menu** — Browse the ten largest claim profiles and your active profile's rank
 - **Visualization Modes** — Toggle between Display Entity or Particle-based boundary rendering
 - **Entry/Exit Titles** — Custom MiniMessage-formatted titles shown when players enter or leave your claim
 - **Rename Claims** — Change your claim's display name at any time
@@ -78,14 +79,7 @@ A powerful, feature-rich chunk-based land protection plugin for Paper servers. C
 
 ## 🔌 Supported Integrations
 
-LandClaimPlugin seamlessly hooks into various popular server plugins to provide an interconnected experience out-of-the-box.
-
-### 🗺️ Web Map Plugins
-Visualize claims directly on your server's web map! Claims are drawn as colored polygons matching the claim's chosen color, complete with owner and size information.
-- **BlueMap**
-- **Dynmap**
-- **Squaremap**
-- **Pl3xMap**
+LandClaimPlugin optionally integrates with server plugins for additional protection and Bedrock support.
 
 ### ⚔️ Combat Tagger Plugins
 Prevent combat exploitation and command abuse while in active combat. Automatically detects combat tagging:
@@ -103,7 +97,7 @@ Respect WorldGuard regions when players attempt to claim land.
 - **Custom Flag Support:** Apply the custom `allow-land-claims` WorldGuard state flag to regions (e.g., Wilderness/Warzone) to explicitly allow players to claim land inside them, overriding the gap and intersection protections!
 
 ### 🎮 Bedrock / Geyser Support
-Bedrock players get a tailored UI when Geyser 2.x is installed. No hard Geyser dependency — the plugin uses reflection to detect the form API and falls back to the Java-only chat prompts if Geyser is missing.
+Bedrock players get a tailored UI when Geyser forms are installed. No hard Geyser dependency — the plugin uses reflection to detect the form API and falls back to inventory confirmations or existing text-input prompts if forms are disabled or unavailable.
 - **CustomForm text input** for anvil-based prompts (rename, color, role name)
 - **ModalForm confirmation** for destructive actions (abandon, unclaim all, ban)
 - Visualization automatically switches to particle mode for Bedrock clients

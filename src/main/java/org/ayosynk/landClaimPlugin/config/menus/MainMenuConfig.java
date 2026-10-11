@@ -18,7 +18,7 @@ public class MainMenuConfig extends OkaeriConfig {
         @Comment("Layout characters map to the item keys below; '.' leaves a slot empty.")
         public List<String> layout = List.of(
                         "1 1 2 2 2 2 2 1 1",
-                        "1 . . S T V . . 1",
+                        "1 . . S T V C . 1",
                         "2 2 2 2 2 2 2 2 2");
 
         @Comment("Filler 1")
@@ -35,6 +35,9 @@ public class MainMenuConfig extends OkaeriConfig {
 
         @Comment("Open profile flags (Visitor category first)")
         public ItemConfig visitors = new ItemConfig("SKULL_BANNER_PATTERN", "<yellow>Flags", List.of());
+
+        @Comment("Open the top 10 profiles ranked by claimed chunks")
+        public ItemConfig topClaims = new ItemConfig("NETHER_STAR", "<aqua>Top Claims", List.of());
 
         public static class ItemConfig extends OkaeriConfig {
                 public String material;

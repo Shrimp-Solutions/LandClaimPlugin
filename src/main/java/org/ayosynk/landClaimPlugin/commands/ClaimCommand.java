@@ -861,8 +861,7 @@ public class ClaimCommand implements LandClaimCommand {
         profile.setClaimColor(hex.toUpperCase());
         claimManager.saveAndSync(profile);
 
-        // Refresh hooks and visualization
-        plugin.getHookManager().refreshMapHooks();
+        // Refresh native visualization
         plugin.getVisualizationManager().invalidateCache(profile.getProfileId());
 
         player.sendMessage(configManager.getMessage("claim-color-changed"));

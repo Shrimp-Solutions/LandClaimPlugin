@@ -455,7 +455,6 @@ public class ClaimManager {
         saveAndSync(targetProfile);
 
         plugin.getVisualizationManager().invalidateCache(playerId);
-        plugin.getHookManager().refreshMapHooks();
         return true;
     }
 
@@ -579,7 +578,6 @@ public class ClaimManager {
 
         plugin.getVisualizationManager().invalidateCache(playerId);
         plugin.getVisualizationManager().showTemporary(player);
-        plugin.getHookManager().refreshMapHooks();
         plugin.getListenerManager().getEventListener().updatePlayerClaimCache(player);
 
         player.sendMessage(configManager.getMessage("claim-radius-success",
@@ -644,7 +642,6 @@ public class ClaimManager {
 
         plugin.getVisualizationManager().invalidateCache(player.getUniqueId());
         plugin.getVisualizationManager().showTemporary(player);
-        plugin.getHookManager().refreshMapHooks();
         plugin.getListenerManager().getEventListener().updatePlayerClaimCache(player);
 
         player.sendMessage(configManager.getMessage("unclaim-radius-success",
@@ -678,7 +675,6 @@ public class ClaimManager {
         Bukkit.getPluginManager().callEvent(deleteEvent);
 
         plugin.getVisualizationManager().invalidateCache(owner);
-        plugin.getHookManager().refreshMapHooks();
         return true;
     }
 
@@ -718,7 +714,6 @@ public class ClaimManager {
             });
 
         plugin.getVisualizationManager().invalidateCache(profile.getProfileId());
-        plugin.getHookManager().refreshMapHooks();
         return count;
     }
 
@@ -776,7 +771,6 @@ public class ClaimManager {
 
         plugin.getVisualizationManager().invalidateCache(oldOwnerId);
         plugin.getVisualizationManager().invalidateCache(newOwnerId);
-        plugin.getHookManager().refreshMapHooks();
         return true;
     }
 
@@ -842,7 +836,6 @@ public class ClaimManager {
                 new org.ayosynk.landClaimPlugin.api.event.ClaimTransferEvent(source, originalOwnerId, newOwnerId));
 
         plugin.getVisualizationManager().invalidateCache(newOwnerId);
-        plugin.getHookManager().refreshMapHooks();
         return true;
     }
 

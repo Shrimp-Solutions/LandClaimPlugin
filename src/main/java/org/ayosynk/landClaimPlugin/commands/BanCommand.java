@@ -5,7 +5,7 @@ import org.ayosynk.landClaimPlugin.managers.ClaimManager;
 import org.ayosynk.landClaimPlugin.managers.ConfigManager;
 import org.ayosynk.landClaimPlugin.models.ClaimProfile;
 import org.ayosynk.landClaimPlugin.util.FoliaScheduler;
-import org.ayosynk.landClaimPlugin.util.GeyserFormHelper;
+import org.ayosynk.landClaimPlugin.gui.ConfirmationGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
@@ -154,23 +154,16 @@ public class BanCommand implements LandClaimCommand {
 
     /**
      * Apply a ban and (if the target is online and currently inside the claim) eject
-     * them via the EventListener. Bedrock players see a ModalForm confirmation first.
+     * them via the EventListener. Bedrock players use ModalForm when enabled;
+     * otherwise the shared inventory confirmation is used.
      */
     public void applyBan(Player owner, ClaimProfile profile, UUID targetId, String targetName) {
-        if (GeyserFormHelper.shouldUseForms(owner)) {
-            String title = configManager.getMessage("geyser-confirm-title");
-            String content = configManager.getMessage("geyser-ban-content",
-                    "<player>", targetName);
-            GeyserFormHelper.sendModalForm(owner, title, content, "Confirm", "Cancel", confirmed -> {
-                if (!confirmed) {
-                    owner.sendMessage(configManager.getMessage("geyser-form-cancelled"));
-                    return;
-                }
-                FoliaScheduler.runForPlayer(plugin, owner, () -> finishBan(owner, profile, targetId, targetName));
-            });
-        } else {
-            finishBan(owner, profile, targetId, targetName);
-        }
+        String title = configManager.getMessage("geyser-confirm-title");
+        String content = configManager.getMessage("geyser-ban-content", "<player>", targetName);
+        ConfirmationGUI.open(owner, title, content,
+                () -> FoliaScheduler.runForPlayer(plugin, owner,
+                        () -> finishBan(owner, profile, targetId, targetName)),
+                null);
     }
 
     private void finishBan(Player owner, ClaimProfile profile, UUID targetId, String targetName) {

@@ -13,11 +13,11 @@ public class VisitorSettingsConfig extends OkaeriConfig {
 
         public String title = "Profile Flags";
 
-        @Comment("Inventory row count and nine-slot-wide layout. Use x for permission flag entries.")
+        @Comment("Inventory row count and nine-slot-wide layout. Use x for permission flag entries and C for the category selector.")
         public int rows = 6;
 
         public List<String> layout = List.of(
-                        "F R T V F F F F F",
+                        "F C F F F F F F F",
                         "F x x x x x x x F",
                         "F x x x x x x x F",
                         "F x x x x x x x F",
@@ -158,15 +158,15 @@ public class VisitorSettingsConfig extends OkaeriConfig {
                         "<yellow>Back",
                         List.of("<gray>Return to Main Menu"));
 
-        @Comment("Switch to Resident flags")
+        @Comment("Category selector appearance when viewing Resident flags")
         public ItemConfig residentCategory = new ItemConfig(
                         "PLAYER_HEAD", "<green>Resident Flags", List.of("<gray>Show Resident permissions"));
 
-        @Comment("Switch to Trusted flags")
+        @Comment("Category selector appearance when viewing Trusted flags")
         public ItemConfig trustedCategory = new ItemConfig(
                         "NAME_TAG", "<gold>Trusted Flags", List.of("<gray>Show Trusted permissions"));
 
-        @Comment("Switch to Visitor flags")
+        @Comment("Category selector appearance when viewing Visitor flags")
         public ItemConfig visitorCategory = new ItemConfig(
                         "OAK_DOOR", "<yellow>Visitor Flags", List.of("<gray>Show Visitor permissions"));
 

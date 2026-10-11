@@ -4,6 +4,10 @@ All notable changes to LandClaimPlugin will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Added a configurable Top Claims menu with ten owner-skinned player heads, stable chunk-count ranking, viewer rank lore, and optional item models.
+- Added a configurable Top Claims button to the main menu.
+
 ### Changed
 - Began replacing profile membership roles with the Resident, Trusted, and Visitor categories; `%landclaim_role%` now reports those categories, plus Owner/Banned.
 - Added per-profile Resident/Trusted flag storage, a Manage menu with role lists, and category selection in Flags.
@@ -22,11 +26,15 @@ All notable changes to LandClaimPlugin will be documented in this file.
 - Removed the custom-role and warp-slot PlaceholderAPI values along with their player-facing commands and menus.
 - Changed YAML loading to avoid Okaeri's update-and-save path during normal loading, preventing automatic YAML rewrites.
 - Removed explicit inventory closes between the member list, player controls, and Manage menus to avoid flicker during navigation.
+- Consolidated the Flags category controls into one cyclic Resident → Trusted → Visitor selector, retaining compatibility with old menu layouts.
+- Unified Bedrock confirmations behind `geyserForms`, with inventory fallback and a single confirmation in the Player Control ban flow.
+- Removed BlueMap, Dynmap, Squaremap, and Pl3xMap integrations and their dependencies, configuration, plugin dependencies, and active documentation references.
 - Removed unused pagination calculations and clarified the current permission categories and retained legacy API/data behavior in the documentation.
 - Removed dynamic role definitions from the active profile model and retained legacy role tables without re-saving them from profile state.
 - Deferred legacy warp world resolution and spawnpoint migration to the server scheduler; the database worker now reads coordinates only.
 
 ### Migration notes
+- Existing map-plugin configuration keys are ignored after removal of the BlueMap, Dynmap, Squaremap, and Pl3xMap hooks.
 - Existing member-role assignments are backed up to `profile_legacy_member_roles` and normalized to Resident. Legacy role-specific permissions are not migrated; the Resident category flags apply instead.
 - Existing trusted-player-specific flags no longer override the shared Trusted category flags; those legacy values remain stored.
 - A single eligible legacy warp is migrated to the profile spawnpoint; multiple or ineligible warps are not selected automatically.

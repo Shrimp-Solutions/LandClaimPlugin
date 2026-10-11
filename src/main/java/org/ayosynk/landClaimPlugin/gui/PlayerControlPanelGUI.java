@@ -68,21 +68,16 @@ public class PlayerControlPanelGUI {
                 });
             }));
             ingredients.put('X', buildPlayerSlotWithAction(config.banPlayer, targetPlayerName, (p, e) -> {
-                // Ban Player — confirmed in a ConfirmationGUI, then handed to BanCommand so
-                // the same Bedrock-form path is used and the player is ejected if online.
+                // BanCommand owns the confirmation path for both inventory and Bedrock forms.
                 if (profile.isBanned(targetPlayerId)) {
                     p.sendMessage(GuiHelper.MM.deserialize("<red>That player is already banned."));
                     return;
                 }
                 FoliaScheduler.runTask(plugin, () -> {
-                    ConfirmationGUI.open(p, "<dark_red>Ban " + targetPlayerName + " from your claim?",
-                            () -> {
-                                org.ayosynk.landClaimPlugin.commands.BanCommand banCmd =
-                                        new org.ayosynk.landClaimPlugin.commands.BanCommand(plugin,
-                                                plugin.getClaimManager(), plugin.getConfigManager());
-                                banCmd.applyBan(p, profile, targetPlayerId, targetPlayerName);
-                            },
-                            () -> PlayerControlPanelGUI.open(p, profile, plugin, targetPlayerId, targetPlayerName));
+                    org.ayosynk.landClaimPlugin.commands.BanCommand banCmd =
+                            new org.ayosynk.landClaimPlugin.commands.BanCommand(plugin,
+                                    plugin.getClaimManager(), plugin.getConfigManager());
+                    banCmd.applyBan(p, profile, targetPlayerId, targetPlayerName);
                 });
             }));
             ingredients.put('B', buildPlayerSlotWithAction(config.back, targetPlayerName, (p, e) -> {

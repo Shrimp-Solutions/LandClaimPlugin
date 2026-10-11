@@ -112,11 +112,8 @@ Third-party plugin integrations.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `init()` | `void` | Detect and initialize hooks |
+| `init()` | `void` | Detect and initialize supported hooks |
 | `isWorldGuardEnabled()` | `boolean` | WorldGuard available |
-| `refreshMapHooks()` | `void` | Update all map overlays |
-
-Supported map plugins: BlueMap, Dynmap, Squaremap, Pl3xMap.
 
 ## Models
 

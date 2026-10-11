@@ -284,19 +284,17 @@ public final class GeyserFormHelper {
 
     /**
      * Send a ModalForm confirmation dialog with two buttons. {@code onResponse} is called
-     * with {@code true} if the player confirmed, {@code false} if they denied, or
-     * {@code false} if the form was closed.
+     * with {@code true} if the player confirmed, {@code false} if they denied or closed
+     * the form. Returns {@code false} when the form could not be sent.
      */
-    public static void sendModalForm(Player player, String title, String content,
+    public static boolean sendModalForm(Player player, String title, String content,
                                       String confirmText, String denyText,
                                       Consumer<Boolean> onResponse) {
         if (!isAvailable() || modalFormClass == null) {
-            safeAccept(onResponse, Boolean.FALSE);
-            return;
+            return false;
         }
         if (player == null || !player.isOnline()) {
-            safeAccept(onResponse, Boolean.FALSE);
-            return;
+            return false;
         }
 
         try {
@@ -343,17 +341,29 @@ public final class GeyserFormHelper {
             Method sendMethod = findMethod(formClass, "send", Player.class);
             if (sendMethod != null) {
                 sendMethod.invoke(form, player);
+                return true;
             } else {
                 Method apiSend = findMethod(geyserApiInstance.getClass(), "sendForm", Player.class, formClass);
                 if (apiSend != null) {
                     apiSend.invoke(geyserApiInstance, player, form);
+                    return true;
                 } else {
-                    safeAccept(onResponse, Boolean.FALSE);
+                    logModalFailure("No supported Geyser form send method was found.", null);
                 }
             }
         } catch (Throwable t) {
-            safeAccept(onResponse, Boolean.FALSE);
+            logModalFailure("Could not build or send a Geyser confirmation form.", t);
         }
+        return false;
+    }
+
+    private static void logModalFailure(String message, Throwable error) {
+        org.ayosynk.landClaimPlugin.LandClaimPlugin plugin =
+                org.ayosynk.landClaimPlugin.LandClaimPlugin.getInstance();
+        if (plugin == null) {
+            return;
+        }
+        plugin.getLogger().warning(error == null ? message : message + " " + error.getMessage());
     }
 
     // ---------------------------------------------------------------------

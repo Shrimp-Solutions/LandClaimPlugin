@@ -192,7 +192,6 @@ public class AdminCommand implements LandClaimCommand {
                     claimManager.saveAndSync(adminProfile);
 
                     plugin.getVisualizationManager().invalidateCache(adminProfile.getProfileId());
-                    plugin.getHookManager().refreshMapHooks();
 
                     player.sendMessage(configManager.getMessage("admin-chunk-claimed"));
                 }));

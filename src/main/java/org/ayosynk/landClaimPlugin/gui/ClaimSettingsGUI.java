@@ -117,7 +117,6 @@ public class ClaimSettingsGUI {
                                                         plugin.getClaimManager().abandonProfile(profile.getProfileId());
                                                         p.sendMessage(plugin.getConfigManager()
                                                                         .getMessage("profile-abandoned"));
-                                                        plugin.getHookManager().refreshMapHooks();
                                                 }, () -> ClaimSettingsGUI.open(p, profile, plugin));
                                         }) : GuiHelper.buildSlot(config.filler2.material, config.filler2.name, config.filler2.lore, config.filler2.itemModel));
 

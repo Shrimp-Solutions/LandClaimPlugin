@@ -52,10 +52,6 @@ LandClaimPlugin/
 | Caffeine | 3.1.8 | In-memory caching | compile |
 | Jedis | 5.1.0 | Redis client | compile |
 | bStats | 3.0.2 | Metrics | compile |
-| BlueMap API | 2.7.7 | Map integration | provided |
-| Dynmap API | 3.7-beta-6 | Map integration | provided |
-| Squaremap API | 1.3.11 | Map integration | provided |
-| Pl3xMap | 1.21.5-527 | Map integration | provided |
 | WorldGuard | 7.0.9 | Region protection | provided |
 | DeluxeCombat API | 1.5.1 | Combat tagging | provided |
 | PvPManager | 4.0.4 | Combat tagging | provided |
