@@ -38,11 +38,14 @@ public class AdminCommand implements LandClaimCommand {
     private final LandClaimPlugin plugin;
     private final ClaimManager claimManager;
     private final ConfigManager configManager;
+    private final ClaimCommand claimCommand;
 
-    public AdminCommand(LandClaimPlugin plugin, ClaimManager claimManager, ConfigManager configManager) {
+    public AdminCommand(LandClaimPlugin plugin, ClaimManager claimManager, ConfigManager configManager,
+            ClaimCommand claimCommand) {
         this.plugin = plugin;
         this.claimManager = claimManager;
         this.configManager = configManager;
+        this.claimCommand = claimCommand;
     }
 
     @Override
@@ -56,6 +59,22 @@ public class AdminCommand implements LandClaimCommand {
                 .permission("landclaim.admin");
         Command.Builder<PlayerSource> playerAdminBase = playerClaimBuilder.literal("admin")
                 .permission("landclaim.admin");
+
+        manager.command(playerAdminBase.literal("tp")
+                .required("owner", StringParser.stringParser(), (context, input) ->
+                        CompletableFuture.completedFuture(
+                                claimCommand.profileOwnerSuggestions(input.remainingInput())))
+                .required("claim", StringParser.stringParser(), (context, input) ->
+                        CompletableFuture.completedFuture(
+                                claimCommand.profileNameSuggestions(context.get("owner"), input.remainingInput())))
+                .handler(context -> {
+                    Player player = context.sender().source();
+                    String ownerName = context.get("owner");
+                    String profileName = context.get("claim");
+                    FoliaScheduler.runForPlayer(plugin, player, () ->
+                            claimCommand.teleportToClaimProfileSpawnpoint(
+                                    player, ownerName, profileName, true));
+                }));
 
         // /claim admin check (Player only - requires player location)
         manager.command(playerAdminBase.literal("check")
@@ -187,6 +206,8 @@ public class AdminCommand implements LandClaimCommand {
                         plugin.getCacheManager().getProfileCache().put(adminProfile.getProfileId(), adminProfile);
                     }
 
+                    claimManager.initializeSpawnpointForFirstChunk(
+                            adminProfile, player, player.getLocation().getChunk());
                     adminProfile.addChunk(pos);
                     claimManager.addToSpatialIndex(pos, adminProfile);
                     claimManager.saveAndSync(adminProfile);

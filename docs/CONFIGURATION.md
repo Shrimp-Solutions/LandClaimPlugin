@@ -38,7 +38,7 @@ Permission overrides: `landclaim.limit.<n>` for chunks and `landclaim.trust.limi
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `multiProfilesEnabled` | Boolean | `false` | Enable multi-profile support |
-| `maxProfilesPerPlayer` | Integer | `2` | Max profiles a player can **own** |
+| `maxProfilesPerPlayer` | Integer | `2` | Default maximum number of profiles a player can **own**. `landclaim.profiles.limit.<n>` raises the effective cap to the highest granted numeric value; `landclaim.admin` bypasses the cap. |
 
 ::: warning
 If you disable `multiProfilesEnabled` after players have already created multiple profiles, they will lose access to all secondary profiles. This setting should be treated as permanent once enabled.
@@ -323,11 +323,12 @@ GUI menus are configured via YAML files in the `plugins/LandClaimPlugin/menus/` 
 - **Materials** — Item types for buttons, fillers, and navigation
 - **Display Names** — MiniMessage-formatted text for all items
 - **Lore** — Item descriptions and instructions
-- **Layout** — Main, Manage, Flags, Residents, Trusted, Claim Settings, Player Control, Profile Selector, Online Player Selector, Claim Color, Rename Claim, Title Settings, and Top Claims menus support configurable `rows` and a nine-slot-wide `layout` list. `x` marks list/content slots, `P` and `N` mark previous/next page buttons, and `.` leaves a slot empty; other characters map to the menu's configured items.
+- **Layout** — Main, Manage, Flags, Residents, Trusted, Claim Settings, Player Control, Profile Selector, Online Player Selector, Banned Players, Claim Color, Rename Claim, Title Settings, and Top Claims menus support configurable `rows` and a nine-slot-wide `layout` list. Layout rows may be compact (`"123456789"`) or keep the legacy space-separated form. `x` marks list/content slots, `P` and `N` mark previous/next page buttons, and `.` or `-` leaves a slot empty. Backticks delimit multi-character button IDs, for example ``"`resident`"``.
 - **Item models** — Items in those menus support optional `item_model` namespaced keys (for example, `minecraft:custom_item`).
 
 Available menu configs:
 - `mainmenu.yml` — Main claim management GUI
+- `BannedPlayers.yml` — Configurable banned-player list and unban controls
 - `TopClaims.yml` — Ten largest claim profiles and the viewing profile's rank
 - `Manage.yml` — Resident, Trusted, and Visitor role entry points
 - `VisitorSettings.yml` — Role-category flags
@@ -341,13 +342,43 @@ Available menu configs:
 
 `TopClaims.yml` requires exactly ten `x` entry slots, one `V` viewer panel, and one `B` back slot. Entry heads use the profile owner as their skin source; supported placeholders are `{rank}`, `{claim_name}`, `{owner}`, and `{chunks}`. The `entry.item_model` field can override the head's item model.
 
-The Flags menu has a single `C` category selector. It cycles Resident → Trusted → Visitor → Resident; opening the menu starts on Visitor. Older `R`, `T`, and `V` selector slots are automatically consolidated on load.
+`profile-selector.yml` selects icon material by the profile spawnpoint's world: `overworldProfileMaterial` (`GRASS_BLOCK`), `netherProfileMaterial` (`NETHERRACK`), or `endProfileMaterial` (`END_STONE`). The matching `overworld_profile_item_model`, `nether_profile_item_model`, or `end_profile_item_model` key optionally applies an item model. Invalid materials fall back to the corresponding built-in material.
 
-Example `mainmenu.yml` layout:
+`mainmenu.yml` supports arbitrary button IDs under `buttons` (the legacy one-character `customItems` section remains supported). Keys must not conflict with built-in tokens (`1`, `2`, `S`, `T`, `V`, `C`, `B`, `P`) or the empty-slot IDs `.` and `-`. Multi-character button IDs must be wrapped in backticks in `layout`. Each item accepts `material`, `name`, `lore`, optional `item_model`, optional `function`, and optional `player_commands` / `console_commands` lists. Built-in functions are `settings`, `manage`, `flags`, `top-claims`, `banned-players`, `profiles`, `claim-tp`, and `close`; `claim-tp` teleports to the spawnpoint of the profile currently shown in the main menu, following the `/claim tp` permission and membership rules. Plugin integrations can register additional functions through `MainMenuGUI.registerFunction`. Player commands execute as the clicking player; console commands execute as console. Placeholders are `%player%`, `%player_uuid%`, `%claim_name%`, `%owner%`, `%world%`, `%x%`, `%y%`, `%z%`, `%display_claim_name%`, and `%display_owner_name%`. Only use console commands from a trusted server configuration.
+
+```yaml
+layout:
+  - "112A22211"
+  - "1.PSTVCB1"
+  - "222222222"
+buttons:
+  A:
+    material: PAPER
+    name: "<aqua>Server Menu"
+    lore:
+      - "<gray>Run the configured actions."
+    function: claim-tp
+    player_commands:
+      - "spawn"
+    console_commands:
+      - "say %player% opened the claim menu action"
+```
+
+Use the custom key (here `A`) in any desired layout slot. For a multi-character ID such as `server-menu`, put `` `server-menu` `` in the layout. The built-in `P` button opens the profile selector, and the built-in `B` button opens the banned players menu; selecting a player offers a confirmation before unbanning them.
+
+The Flags menu has a single `C` category selector. It cycles Resident → Trusted → Visitor → Resident; opening the menu starts on Visitor. Older `R`, `T`, and `V` selector slots are automatically consolidated on load. `B` returns from Flags to the main claim menu.
+
+Basic `mainmenu.yml` layout (the full custom-item example is above):
 ```yaml
 rows: 3
 layout:
   - "1 1 2 2 2 2 2 1 1"
-  - "1 . . S T V C . 1"
+  - "1 . P S T V C B 1"
   - "2 2 2 2 2 2 2 2 2"
 ```
+
+### PlaceholderAPI role labels
+
+The `%landclaim_role%` placeholder returns localized text for `Owner`, `Resident`, `Trusted`, `Banned`, or `Visitor` according to the player's role at their current location. Each language file under `plugins/LandClaimPlugin/locales/` can override `placeholder-role-owner`, `placeholder-role-resident`, `placeholder-role-trusted`, `placeholder-role-banned`, and `placeholder-role-visitor`.
+
+`/claim tp <owner> <claim>` is limited to the profile owner and Residents; Trusted players and Visitors cannot use it. Administrators can use `/claim admin tp <owner> <claim>` to bypass membership and ban checks. A profile's initial spawnpoint is set to the center of the first successfully claimed chunk, at the claimant's current height; `/claim spawnpoint` can later change it.

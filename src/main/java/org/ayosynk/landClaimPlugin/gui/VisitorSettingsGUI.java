@@ -127,7 +127,7 @@ public class VisitorSettingsGUI {
                         ingredients.put('B', new SlotDefinition(
                                         GuiHelper.buildItemStack(config.back.material, config.back.name,
                                                         config.back.lore, config.back.itemModel),
-                                        (p, e) -> ManageGUI.open(p, profile, plugin)));
+                                        (p, e) -> MainMenuGUI.open(p, profile, plugin)));
                         VisitorSettingsConfig.ItemConfig selector = switch (role) {
                                 case "resident" -> config.residentCategory;
                                 case "trusted" -> config.trustedCategory;

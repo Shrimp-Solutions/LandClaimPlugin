@@ -36,3 +36,34 @@ Completar la integración de los menús rediseñados con Bedrock/Geyser, retirar
 ## Estado de ejecución
 
 Implementado y verificado con `mvn test` y `mvn package` bajo JDK 25. La validación en servidor Paper/Folia y cliente Bedrock/Geyser sigue pendiente porque requiere el entorno de juego.
+
+## Siguiente etapa: perfiles, teletransporte y comandos
+
+### Objetivo
+
+Hacer que los límites por rango y las operaciones de perfiles funcionen con multi-perfiles, completar los spawnpoints automáticos, corregir el refresco del actionbar y endurecer los comandos de PvP para Folia. Simplificar los controles visuales: usar `/claim view` y `/claim viewmode`, retirar el menú de color y conservar el color solo por comando con una advertencia cuando Display Entity no pueda reflejarlo.
+
+### Cambios
+
+- Añadir `landclaim.profiles.limit.<n>` como override del máximo global, tomando el mayor valor entre configuración y permisos efectivos; `landclaim.admin` conserva bypass ilimitado. Aplicar el límite y el valor reportado en todas las rutas de creación.
+- Revisar y corregir la resolución de `/claim tp` para perfiles múltiples, con sugerencias/autocompletado para dueño y perfil. Crear automáticamente un spawnpoint seguro/contextual para cada perfil y un nombre determinista `claim-<n>` cuando se cree un perfil sin nombre explícito.
+- Unificar la lógica compartida de `/claim profiles` y `/claim list` para que ambas rutas expongan/seleccionen perfiles de forma coherente.
+- Corregir el actionbar al entrar o salir de claims propias, ajenas y wilderness, incluyendo refresco inmediato y scheduler compatible con Folia.
+- Reemplazar los iconos de libro del selector de perfiles por iconos configurables por mundo (overworld `GRASS_BLOCK`, Nether `NETHERRACK`, End `END_STONE`), con `item_model` opcional y fallback seguro.
+- Rehacer `/claim pvp on|off [time]` para calcular posiciones y ejecutar acciones Bukkit exclusivamente en el scheduler de región/jugador apropiado, sin recuperar chunks desde hilos async.
+- Renombrar `/claim visible` a `/claim view` y `/claim visualization` a `/claim viewmode`, manteniendo compatibilidad mediante aliases si el framework la permite sin registrar comandos ambiguos.
+- Retirar Change Claim Color del menú y su configuración de menú; conservar `/claim color`. Si el perfil usa `DISPLAY_ENTITY`, informar que el color no se representa en ese modo y recomendar cambiar a partículas, sin afirmar que cambió un borde que el cliente no puede colorear.
+- Actualizar mensajes, permisos descritos, documentación y `CHANGELOG.md`.
+
+### Validación
+
+- `mvn test package` con JDK 25, incluyendo pruebas unitarias de límite por defecto (2), permiso superior (5), permisos inválidos y precedencia del mayor límite; `git diff --check`.
+- Buscar todos los puntos que crean perfiles y aplican límites; comprobar el placeholder `<limit>` con el valor efectivo.
+- Probar `/claim tp` con dueño y miembros en multi-perfiles, nombres ambiguos, spawnpoint ausente y autocompletado.
+- Revisar transiciones de actionbar entre perfil propio, ajeno y wilderness; revisar `/claim pvp on|off` sin operaciones Bukkit desde async.
+- Verificar layouts/configuración antigua del selector de perfiles y `item_model` en los iconos por mundo.
+- Validar la retirada del botón de color y el aviso del comando con Display Entity; probar Paper y Folia en servidor para los comportamientos dependientes de región.
+
+### Estado de esta etapa
+
+Implementación y documentación actualizadas, incluida la retirada de la GUI/configuración de cambio de color, el filtrado del autocompletado de `/claim tp`, el aviso de color solo tras una modificación válida y la apertura del selector en el scheduler del jugador. `mvn test package` pasa con JDK 25; el proyecto no contiene pruebas automatizadas (`No tests to run`). La validación de juego en Paper/Folia y Bedrock/Geyser sigue pendiente porque requiere un servidor de prueba.

@@ -6,16 +6,18 @@ All commands use `/claim` (alias: `/c`) as the base.
 
 | Command | Description |
 |---|---|
-| `/claim` | Claim the chunk you're standing in |
+| `/claim` | Claim the chunk you're standing in; automatically creates a `claim-N` profile and spawnpoint on first use |
 | `/claim radius <1-5>` | Claim a square area of chunks centered on your current chunk (e.g. `1` = 3×3, `2` = 5×5) |
-| `/claim profiles` | Open the active profile selector (Multi-Profile mode) |
+| `/claim profiles` | Open the owned/member profile selector (Multi-Profile mode) |
+| `/claim list` | Alias for `/claim profiles` |
 | `/claim create <name>` | Create a new claim profile with the given name |
 | `/claim auto` | Toggle auto-claim mode (claim chunks as you walk) |
 | `/claim menu` | Open the main claim management GUI |
 | `/claim info` | View info about the claim at your location |
-| `/claim visible` | Toggle claim boundary visualization |
-| `/claim toggle <mode>` | Switch visualization mode (`display_entities`, `particles`, `off`) |
-| `/claim visualization <mode>` | Alias for `/claim toggle` |
+| `/claim view` | Toggle claim boundary visibility (`/claim visible` remains an alias) |
+| `/claim viewmode <mode>` | Switch visualization mode (`display_entities`, `particles`, `off`) |
+| `/claim toggle <mode>` | Legacy alias for `/claim viewmode` |
+| `/claim visualization <mode>` | Legacy alias for `/claim viewmode` |
 | `/claim notify` | Toggle claim enter and leave chat notifications (alias: `/claim chatnotify`) |
 | `/claim rename <name>` | Rename your active claim profile (3-32 alphanumeric characters) |
 | `/claim color <color>` | Change claim color using a named color (e.g., `red`, `lime`) or hex code (e.g., `#FF5500`) |
@@ -40,7 +42,7 @@ These commands respect the same permission checks as clicking the GUI buttons.
 
 | Command | Permission Required | Description |
 |---|---|---|
-| `/claim menu settings` | `MANAGE_SETTINGS` | Open claim settings (color, PvP, visibility, titles) |
+| `/claim menu settings` | `MANAGE_SETTINGS` | Open claim settings (PvP, visibility, titles) |
 | `/claim menu manage` | `MANAGE_MEMBERS` | Open Resident, Trusted, and Visitor management |
 | `/claim menu flags` | `MANAGE_SETTINGS` | Open profile flags (Visitor category by default) |
 
@@ -69,7 +71,7 @@ These commands respect the same permission checks as clicking the GUI buttons.
 |---|---|
 | `/claim ban <player>` | Ban a player from your active claim. Banned players lose every flag, are blocked from entering any of the claim's chunks, and (if online) are teleported outside. Use `/claim unban` to reverse. |
 | `/claim unban <player>` | Remove a player's ban from your active claim. |
-| `/claim banlist` | List all players currently banned from your active claim. |
+| `/claim banlist` | Open the paginated list of players banned from your active profile; click an entry to confirm unbanning. |
 
 ::: tip Ban vs. Kick
 `/claim member kick` removes a player from the member list but still allows them to enter as a visitor. `/claim ban` is a hard denial — the player cannot enter the claim at all, even as a visitor. Use ban for players who have been harassing other members.
@@ -122,8 +124,8 @@ The `/claim admin add chunk` command is fully compatible with **DeluxeMenus** an
 | `landclaim.ban` | Ban / unban players from your claim | `true` |
 | `landclaim.abandon` | Abandon active claim profile | `true` |
 | `landclaim.create` | Create new claim profiles | `true` |
-| `landclaim.visible` | Toggle boundary visibility | `true` |
-| `landclaim.toggle` | Switch visualization mode | `true` |
+| `landclaim.visible` | Toggle boundary visibility with `/claim view` | `true` |
+| `landclaim.toggle` | Switch visualization mode with `/claim viewmode` | `true` |
 | `landclaim.info` | View claim information | `true` |
 | `landclaim.pvp` | Toggle PvP state | `true` |
 | `landclaim.rename` | Rename claims | `true` |
@@ -131,8 +133,10 @@ The `/claim admin add chunk` command is fully compatible with **DeluxeMenus** an
 | `landclaim.unclaimall` | Unclaim all land | `true` |
 | `landclaim.leave` | Leave a claim | `true` |
 | `landclaim.menu.*` | Access to all GUI menus | `true` |
-| `landclaim.menu.<menu>` | Access to a specific GUI menu (e.g. `main`, `manage`, `flags`, `members`, `trusted`) | `true` |
+| `landclaim.menu.<menu>` | Access to a specific GUI menu (e.g. `main`, `manage`, `flags`, `members`, `trusted`, `banlist`) | `true` |
 | `landclaim.limit.<n>` | Override the chunk claim limit | `false` |
 | `landclaim.list` | List claims | `true` |
 | `landclaim.trust.limit.<n>` | Set a Trusted-player cap for a profile (default cap: 5) | `false` |
-| `landclaim.trust.limit.<n>` | Set a Trusted-player cap for a profile (default cap: 5) | `false` |
+| `landclaim.profiles.limit.<n>` | Raise the owned-profile limit to at least `<n>`; the highest effective limit wins | `false` |
+
+`landclaim.admin` bypasses the profile limit. `/claim color <color>` remains command-only; Display Entity borders do not render claim colors, so the command warns and saves the color for when particle visualization is used.

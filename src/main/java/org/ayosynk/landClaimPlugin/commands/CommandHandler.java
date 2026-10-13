@@ -115,9 +115,6 @@ public class CommandHandler {
         // Instantiate modular command groups
         claimCommand = new ClaimCommand(plugin, claimManager, configManager, visualizationManager);
 
-        AdminCommand adminCommand = new AdminCommand(plugin, claimManager, configManager);
-        adminCommand.register(commandManager, claimRoot, playerClaimBuilder);
-
         List<LandClaimCommand> playerCommands = List.of(
                 claimCommand,
                 new UnclaimCommand(plugin, claimManager, configManager),
@@ -132,6 +129,9 @@ public class CommandHandler {
         for (LandClaimCommand cmd : playerCommands) {
             cmd.register(commandManager, playerClaimBuilder);
         }
+
+        AdminCommand adminCommand = new AdminCommand(plugin, claimManager, configManager, claimCommand);
+        adminCommand.register(commandManager, claimRoot, playerClaimBuilder);
     }
 
     // --- Delegates to ClaimCommand for auto-claim state ---
@@ -150,6 +150,11 @@ public class CommandHandler {
 
     public void toggleAutoUnclaim(Player player) {
         claimCommand.toggleAutoUnclaim(player);
+    }
+
+    public void teleportToActiveProfileSpawnpoint(Player player,
+            org.ayosynk.landClaimPlugin.models.ClaimProfile profile) {
+        claimCommand.teleportToActiveProfileSpawnpoint(player, profile);
     }
 
     public void cleanupPlayer(UUID playerId) {

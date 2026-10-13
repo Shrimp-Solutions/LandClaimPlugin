@@ -6,6 +6,7 @@ import org.ayosynk.landClaimPlugin.managers.ConfigManager;
 import org.ayosynk.landClaimPlugin.models.ClaimProfile;
 import org.ayosynk.landClaimPlugin.util.FoliaScheduler;
 import org.ayosynk.landClaimPlugin.gui.ConfirmationGUI;
+import org.ayosynk.landClaimPlugin.gui.BannedPlayersGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
@@ -137,18 +138,7 @@ public class BanCommand implements LandClaimCommand {
                         return;
                     }
 
-                    var banned = profile.getBannedPlayers();
-                    if (banned.isEmpty()) {
-                        player.sendMessage(configManager.getMessage("banlist-empty"));
-                        return;
-                    }
-                    player.sendMessage(configManager.getMessage("banlist-header"));
-                    for (UUID bannedId : banned) {
-                        String name = Bukkit.getOfflinePlayer(bannedId).getName();
-                        if (name == null) name = bannedId.toString();
-                        player.sendMessage(configManager.getMessage("banlist-entry",
-                                "<player>", name));
-                    }
+                    BannedPlayersGUI.open(player, profile, plugin);
                 }));
     }
 

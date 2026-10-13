@@ -99,6 +99,18 @@ public class MessagesConfig extends OkaeriConfig {
 
     public String claimInfoTrusted = "<green>Trusted: <gold><players>";
 
+    @Comment("Localized values returned by the %landclaim_role% PlaceholderAPI placeholder.")
+    @eu.okaeri.configs.annotation.CustomKey("placeholder-role-owner")
+    public String placeholderRoleOwner = "Owner";
+    @eu.okaeri.configs.annotation.CustomKey("placeholder-role-resident")
+    public String placeholderRoleResident = "Resident";
+    @eu.okaeri.configs.annotation.CustomKey("placeholder-role-trusted")
+    public String placeholderRoleTrusted = "Trusted";
+    @eu.okaeri.configs.annotation.CustomKey("placeholder-role-banned")
+    public String placeholderRoleBanned = "Banned";
+    @eu.okaeri.configs.annotation.CustomKey("placeholder-role-visitor")
+    public String placeholderRoleVisitor = "Visitor";
+
     // Commands hardcoded messages
     public String notInClaim = "<red>You are not standing in a claim.";
     public String autoClaimEnabled = "<green>Auto-claim enabled.";

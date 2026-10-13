@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,27 +73,32 @@ public class CustomGui implements InventoryHolder {
     /**
      * Parse InvUI-style structure strings and fill the inventory.
      * <p>
-     * Format: each row is a space-separated string of single characters.
-     * Characters map to {@link SlotDefinition} entries in the ingredients map.
-     * Unknown characters or {@code '.'} are skipped (empty slot).
+     * Rows may use compact characters or space-separated IDs. Backticks delimit
+     * multi-character IDs. Unknown IDs, {@code '.'}, and {@code '-'} are skipped.
      *
-     * @param rows        structure rows, e.g. {@code "F F F F F F F F F"}
-     * @param ingredients character → item+action mappings
+     * @param rows        structure rows, e.g. {@code "FFFFFFFFF"} or {@code "F F F F F F F F F"}
+     * @param ingredients slot ID → item+action mappings (single-character IDs may use Character keys)
      */
-    public void fillFromStructure(String[] rows, Map<Character, SlotDefinition> ingredients) {
-        int slot = 0;
-        for (String row : rows) {
-            String[] chars = row.split(" ");
-            for (String ch : chars) {
-                if (slot >= inventory.getSize())
+    public void fillFromStructure(String[] rows, Map<?, SlotDefinition> ingredients) {
+        List<List<String>> parsedRows = GuiLayoutParser.parseRows(rows);
+        for (int rowIndex = 0; rowIndex < parsedRows.size(); rowIndex++) {
+            List<String> row = parsedRows.get(rowIndex);
+            for (int column = 0; column < row.size(); column++) {
+                int slot = rowIndex * 9 + column;
+                if (slot >= inventory.getSize()) {
                     return;
-                if (ch.length() == 1 && ch.charAt(0) != '.') {
-                    SlotDefinition def = ingredients.get(ch.charAt(0));
-                    if (def != null) {
-                        setItem(slot, def.item(), def.action());
-                    }
                 }
-                slot++;
+                String id = row.get(column);
+                if (id.equals(".") || id.equals("-")) {
+                    continue;
+                }
+                SlotDefinition definition = ingredients.get(id);
+                if (definition == null && id.length() == 1) {
+                    definition = ingredients.get(id.charAt(0));
+                }
+                if (definition != null) {
+                    setItem(slot, definition.item(), definition.action());
+                }
             }
         }
     }

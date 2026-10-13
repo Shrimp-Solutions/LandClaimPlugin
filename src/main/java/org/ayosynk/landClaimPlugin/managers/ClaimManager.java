@@ -445,6 +445,7 @@ public class ClaimManager {
             return false;
         }
 
+        initializeSpawnpointForFirstChunk(targetProfile, player, chunk);
         targetProfile.addChunk(pos);
         addToSpatialIndex(pos, targetProfile);
 
@@ -456,6 +457,20 @@ public class ClaimManager {
 
         plugin.getVisualizationManager().invalidateCache(playerId);
         return true;
+    }
+
+    public void initializeSpawnpointForFirstChunk(ClaimProfile profile, Player player, Chunk chunk) {
+        if (!profile.getOwnedChunks().isEmpty() || profile.getSpawnpointWorldName() != null) {
+            return;
+        }
+        Location playerLocation = player.getLocation();
+        Location spawnpoint = new Location(chunk.getWorld(),
+                (chunk.getX() << 4) + 8,
+                playerLocation.getY(),
+                (chunk.getZ() << 4) + 8,
+                playerLocation.getYaw(),
+                playerLocation.getPitch());
+        profile.setSpawnpoint(spawnpoint);
     }
 
     /**

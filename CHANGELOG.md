@@ -4,11 +4,28 @@ All notable changes to LandClaimPlugin will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Returned the Flags menu back button to the main claim menu instead of the role selector.
+- Normalize legacy `§` formatting codes before MiniMessage parsing to prevent ban-confirmation GUI crashes.
+- Limited `/claim tp` to profile owners and Residents; added administrator-only `/claim admin tp`.
+- Set a profile's default spawnpoint at the center of its first successfully claimed chunk without overwriting a configured spawnpoint.
+- Made compact and legacy space-separated menu layouts use one parser, with `.` and `-` consistently treated as empty slots (including Manage).
+
 ### Added
+- Restored a configurable banned-player menu from the main menu and `/claim banlist`, with confirmation-based unbanning.
+- Added configurable main-menu custom layout items that execute commands as the clicking player and/or console.
+- Added configurable menu button IDs and registered `function` handlers, including the Profiles button in the main menu.
+- Added the main-menu `claim-tp` function to teleport to the displayed profile's spawnpoint using `/claim tp` access and combat rules.
+- Added language keys for the Owner, Resident, Trusted, Banned, and Visitor values of `%landclaim_role%`.
 - Added a configurable Top Claims menu with ten owner-skinned player heads, stable chunk-count ranking, viewer rank lore, and optional item models.
 - Added a configurable Top Claims button to the main menu.
+- Added per-rank `landclaim.profiles.limit.<n>` profile caps and world-specific, item-model-ready icons in the profile selector.
+- Automatically creates a named profile (`claim-N`) with a spawnpoint when a player claims for the first time; `/claim list` shares the profile selector with `/claim profiles`.
 
 ### Changed
+- Bumped the plugin version to `v26.1.2`.
+- Corrected owner actionbar status for profiles whose internal profile ID differs from the owner's UUID, and moved `/claim pvp` world-position reads onto the player's Folia region.
+- Added `/claim view` and `/claim viewmode` with legacy command aliases; removed the Change Claim Color menu and its configuration, leaving color management to `/claim color`. The command warns that Display Entity boundaries do not render stored colors.
 - Began replacing profile membership roles with the Resident, Trusted, and Visitor categories; `%landclaim_role%` now reports those categories, plus Owner/Banned.
 - Added per-profile Resident/Trusted flag storage, a Manage menu with role lists, and category selection in Flags.
 - Changed `/claim trust add` to grant Trusted access directly and added a configurable default cap of five, extendable with `landclaim.trust.limit.<n>`.

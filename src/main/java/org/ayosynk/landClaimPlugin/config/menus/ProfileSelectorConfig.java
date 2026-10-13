@@ -19,15 +19,17 @@ public class ProfileSelectorConfig extends OkaeriConfig {
             "F x x x x x x x F",
             "F F F P C N F F F");
 
-    @Comment("The material used for a profile that is NOT active.")
-    public String inactiveProfileMaterial = "BOOK";
-    @CustomKey("inactive_profile_item_model")
-    public String inactiveProfileItemModel;
+    @Comment("Profile icon materials selected from the profile's spawnpoint world (or the viewer's world when unset).")
+    public String overworldProfileMaterial = "GRASS_BLOCK";
+    public String netherProfileMaterial = "NETHERRACK";
+    public String endProfileMaterial = "END_STONE";
 
-    @Comment("The material used for the active profile.")
-    public String activeProfileMaterial = "ENCHANTED_BOOK";
-    @CustomKey("active_profile_item_model")
-    public String activeProfileItemModel;
+    @CustomKey("overworld_profile_item_model")
+    public String overworldProfileItemModel;
+    @CustomKey("nether_profile_item_model")
+    public String netherProfileItemModel;
+    @CustomKey("end_profile_item_model")
+    public String endProfileItemModel;
 
     @Comment("Format for the profile item name. Variables: <name>")
     public String profileNameFormat = "<!italic><gold><bold><name>";

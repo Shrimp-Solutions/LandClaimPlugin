@@ -56,10 +56,8 @@ public class ClaimSettingsGUI {
                                                 RenameClaimGUI.open(p, profile, plugin);
                                         }) : GuiHelper.buildSlot(config.filler2.material, config.filler2.name, config.filler2.lore, config.filler2.itemModel));
 
-                        ingredients.put('C', canManageSettings ? GuiHelper.buildSlot(config.color.material, config.color.name,
-                                        config.color.lore, profile, player, ownerName, claimName, config.color.itemModel, (p, e) -> {
-                                                ChangeClaimColorGUI.open(p, profile, plugin);
-                                        }) : GuiHelper.buildSlot(config.filler2.material, config.filler2.name, config.filler2.lore, config.filler2.itemModel));
+                        ingredients.put('C', GuiHelper.buildSlot(config.filler2.material,
+                                        config.filler2.name, config.filler2.lore, config.filler2.itemModel));
 
 
                         java.util.List<String> modifiedPvpLore = new java.util.ArrayList<>();

@@ -14,6 +14,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Shared GUI utility class — eliminates duplicated item-building boilerplate
@@ -23,6 +27,17 @@ public final class GuiHelper {
 
     /** Cached MiniMessage singleton — avoids re-creation per call. */
     public static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final Pattern LEGACY_HEX = Pattern.compile("(?i)§x((?:§[0-9a-f]){6})");
+    private static final Pattern LEGACY_CODE = Pattern.compile("(?i)§([0-9a-fk-or])");
+    private static final Map<Character, String> LEGACY_TAGS = Map.ofEntries(
+            Map.entry('0', "<black>"), Map.entry('1', "<dark_blue>"), Map.entry('2', "<dark_green>"),
+            Map.entry('3', "<dark_aqua>"), Map.entry('4', "<dark_red>"), Map.entry('5', "<dark_purple>"),
+            Map.entry('6', "<gold>"), Map.entry('7', "<gray>"), Map.entry('8', "<dark_gray>"),
+            Map.entry('9', "<blue>"), Map.entry('a', "<green>"), Map.entry('b', "<aqua>"),
+            Map.entry('c', "<red>"), Map.entry('d', "<light_purple>"), Map.entry('e', "<yellow>"),
+            Map.entry('f', "<white>"), Map.entry('k', "<obfuscated>"), Map.entry('l', "<bold>"),
+            Map.entry('m', "<strikethrough>"), Map.entry('n', "<underlined>"), Map.entry('o', "<italic>"),
+            Map.entry('r', "<reset>"));
 
     /** Pre-allocated ItemFlag array — avoids ItemFlag.values() clone per item. */
     private static final ItemFlag[] ALL_FLAGS = ItemFlag.values();
@@ -146,14 +161,14 @@ public final class GuiHelper {
         }
 
         if (name != null && !name.isEmpty()) {
-            Component comp = MM.deserialize("<i:false>" + name);
+            Component comp = deserialize("<i:false>" + name);
             meta.displayName(comp);
         }
 
         if (lore != null && !lore.isEmpty()) {
             List<Component> loreComponents = new ArrayList<>(lore.size());
             for (String line : lore) {
-                loreComponents.add(MM.deserialize("<i:false>" + line));
+                loreComponents.add(deserialize("<i:false>" + line));
             }
             meta.lore(loreComponents);
         }
@@ -162,6 +177,33 @@ public final class GuiHelper {
 
         item.setItemMeta(meta);
         return item;
+    }
+
+    public static Component deserialize(String text) {
+        if (text == null || text.isEmpty()) {
+            return Component.empty();
+        }
+        String normalized = normalizeLegacyFormatting(text);
+        return MM.deserialize(normalized);
+    }
+
+    private static String normalizeLegacyFormatting(String text) {
+        Matcher hexMatcher = LEGACY_HEX.matcher(text);
+        StringBuffer normalized = new StringBuffer();
+        while (hexMatcher.find()) {
+            String hex = hexMatcher.group(1).replace("§", "");
+            hexMatcher.appendReplacement(normalized, Matcher.quoteReplacement("<#" + hex + ">"));
+        }
+        hexMatcher.appendTail(normalized);
+
+        Matcher codeMatcher = LEGACY_CODE.matcher(normalized.toString());
+        StringBuffer result = new StringBuffer();
+        while (codeMatcher.find()) {
+            String tag = LEGACY_TAGS.get(codeMatcher.group(1).toLowerCase(Locale.ROOT).charAt(0));
+            codeMatcher.appendReplacement(result, Matcher.quoteReplacement(tag));
+        }
+        codeMatcher.appendTail(result);
+        return result.toString();
     }
 
     public static void applyItemModel(ItemMeta meta, String itemModel, String itemName) {
