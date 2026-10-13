@@ -43,24 +43,23 @@ public class PaginatedGui extends CustomGui {
 
         // Parse structure to find content slot positions AND fill static ingredients
         List<Integer> contentSlotList = new ArrayList<>();
-        int slot = 0;
-        for (String row : structure) {
-            String[] chars = row.split(" ");
-            for (String ch : chars) {
-                if (slot >= rows * 9)
+        List<List<String>> parsedRows = GuiLayoutParser.parseRows(structure);
+        for (int rowIndex = 0; rowIndex < parsedRows.size(); rowIndex++) {
+            List<String> row = parsedRows.get(rowIndex);
+            for (int column = 0; column < row.size(); column++) {
+                int slot = rowIndex * 9 + column;
+                if (slot >= rows * 9) {
                     break;
-                if (ch.length() == 1) {
-                    char c = ch.charAt(0);
-                    if (c == contentSlotChar) {
-                        contentSlotList.add(slot);
-                    } else if (c != '.') {
-                        SlotDefinition def = ingredients.get(c);
-                        if (def != null) {
-                            setItem(slot, def.item(), def.action());
-                        }
+                }
+                String id = row.get(column);
+                if (id.equals(String.valueOf(contentSlotChar))) {
+                    contentSlotList.add(slot);
+                } else if (!id.equals(".") && !id.equals("-") && id.length() == 1) {
+                    SlotDefinition definition = ingredients.get(id.charAt(0));
+                    if (definition != null) {
+                        setItem(slot, definition.item(), definition.action());
                     }
                 }
-                slot++;
             }
         }
         this.contentSlots = contentSlotList.stream().mapToInt(Integer::intValue).toArray();

@@ -15,7 +15,7 @@ public class ClaimSettingsConfig extends OkaeriConfig {
     public List<String> layout = List.of(
             "1 1 2 2 O 2 2 1 1",
             "1 2 2 2 2 2 2 2 1",
-            "2 N C 2 W V T A 2",
+            "2 N 2 2 W V T A 2",
             "1 2 2 2 2 2 2 2 1",
             "1 1 2 2 B 2 2 1 1");
 
@@ -38,13 +38,6 @@ public class ClaimSettingsConfig extends OkaeriConfig {
             "<aqua>Change Claim Name",
             List.of(
                     "<gray>Click to rename this claim."));
-
-    @Comment("Color Button")
-    public ItemConfig color = new ItemConfig(
-            "BRUSH",
-            "<light_purple>Change Claim Color",
-            List.of(
-                    "<gray>Change the color used by the native claim visualization."));
 
     @Comment("PvP Toggle Button")
     public ItemConfig pvpToggle = new ItemConfig(

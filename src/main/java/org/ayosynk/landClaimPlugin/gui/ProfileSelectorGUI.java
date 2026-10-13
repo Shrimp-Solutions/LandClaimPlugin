@@ -11,6 +11,7 @@ import org.ayosynk.landClaimPlugin.models.ClaimProfile;
 import org.ayosynk.landClaimPlugin.models.ClaimPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -27,7 +28,7 @@ public class ProfileSelectorGUI {
         if (!GuiHelper.checkMenuPermission(player, "profiles", plugin)) {
             return;
         }
-        FoliaScheduler.runAsync(plugin, () -> {
+        FoliaScheduler.runForPlayer(plugin, player, () -> {
             ClaimPlayer cp = plugin.getCacheManager().getPlayerCache().getIfPresent(player.getUniqueId());
             if (cp == null) return;
             
@@ -53,14 +54,30 @@ public class ProfileSelectorGUI {
                 contentItems.add(new GuiItem() {
                     @Override
                     public ItemStack render(Player viewer) {
-                        Material mat;
-                        try {
-                            mat = Material.valueOf(isActive ? config.activeProfileMaterial.toUpperCase() : config.inactiveProfileMaterial.toUpperCase());
-                        } catch (Exception ex) {
-                            mat = isActive ? Material.ENCHANTED_BOOK : Material.BOOK;
+                        World iconWorld = profile.getSpawnpointWorldName() == null
+                                ? viewer.getWorld()
+                                : Bukkit.getWorld(profile.getSpawnpointWorldName());
+                        if (iconWorld == null) {
+                            iconWorld = viewer.getWorld();
                         }
-                        
-                        ItemStack item = new ItemStack(mat);
+                        Material material;
+                        String itemModel;
+                        switch (iconWorld.getEnvironment()) {
+                            case NETHER -> {
+                                material = configuredMaterial(config.netherProfileMaterial, Material.NETHERRACK);
+                                itemModel = config.netherProfileItemModel;
+                            }
+                            case THE_END -> {
+                                material = configuredMaterial(config.endProfileMaterial, Material.END_STONE);
+                                itemModel = config.endProfileItemModel;
+                            }
+                            default -> {
+                                material = configuredMaterial(config.overworldProfileMaterial, Material.GRASS_BLOCK);
+                                itemModel = config.overworldProfileItemModel;
+                            }
+                        }
+
+                        ItemStack item = new ItemStack(material);
                         ItemMeta meta = item.getItemMeta();
                         if (meta != null) {
                             String nameStr = config.profileNameFormat.replace("<name>", profile.getColoredName());
@@ -80,9 +97,11 @@ public class ProfileSelectorGUI {
                                 lore.add(GuiHelper.MM.deserialize(config.clickToActivateLore));
                             }
                             meta.lore(lore);
-                            GuiHelper.applyItemModel(meta,
-                                    isActive ? config.activeProfileItemModel : config.inactiveProfileItemModel,
-                                    isActive ? "active profile" : "inactive profile");
+                            if (isActive) {
+                                meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
+                                meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+                            }
+                            GuiHelper.applyItemModel(meta, itemModel, "profile world icon");
                             item.setItemMeta(meta);
                         }
                         return item;
@@ -135,5 +154,10 @@ public class ProfileSelectorGUI {
             gui.setContent(contentItems, player);
             gui.open(player);
         });
+    }
+
+    private static Material configuredMaterial(String name, Material fallback) {
+        Material configured = name == null ? null : Material.matchMaterial(name);
+        return configured == null ? fallback : configured;
     }
 }

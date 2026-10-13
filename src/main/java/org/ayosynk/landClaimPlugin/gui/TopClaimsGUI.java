@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import org.ayosynk.landClaimPlugin.LandClaimPlugin;
 import org.ayosynk.landClaimPlugin.config.menus.TopClaimsConfig;
 import org.ayosynk.landClaimPlugin.gui.framework.CustomGui;
+import org.ayosynk.landClaimPlugin.gui.framework.GuiLayoutParser;
 import org.ayosynk.landClaimPlugin.gui.framework.SlotDefinition;
 import org.ayosynk.landClaimPlugin.models.ClaimProfile;
 import org.ayosynk.landClaimPlugin.util.FoliaScheduler;
@@ -143,15 +144,16 @@ public final class TopClaimsGUI {
         int entries = 0;
         int viewers = 0;
         int backs = 0;
-        Set<String> allowed = Set.of("F", "V", "B", "x", ".");
+        Set<String> allowed = Set.of("F", "V", "B", "x", ".", "-");
         for (int rowIndex = 0; rowIndex < config.layout.size(); rowIndex++) {
-            String row = config.layout.get(rowIndex);
-            if (row == null || row.trim().isEmpty()) {
-                plugin.getLogger().severe("Invalid Top Claims layout row " + (rowIndex + 1) + ".");
+            List<String> slots;
+            try {
+                slots = GuiLayoutParser.parseRow(config.layout.get(rowIndex), rowIndex + 1);
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().severe("Invalid Top Claims layout: " + e.getMessage());
                 return null;
             }
-            String[] slots = row.trim().split("\\s+");
-            if (slots.length != 9) {
+            if (slots.size() != 9) {
                 plugin.getLogger().severe("Invalid Top Claims layout row " + (rowIndex + 1)
                         + ": each row must contain exactly nine slots.");
                 return null;
@@ -176,13 +178,13 @@ public final class TopClaimsGUI {
 
     private static List<Integer> findSlots(String[] layout, String target) {
         List<Integer> slots = new ArrayList<>();
-        int inventorySlot = 0;
-        for (String row : layout) {
-            for (String slot : row.trim().split("\\s+")) {
-                if (target.equals(slot)) {
-                    slots.add(inventorySlot);
+        List<List<String>> parsedRows = GuiLayoutParser.parseRows(layout);
+        for (int rowIndex = 0; rowIndex < parsedRows.size(); rowIndex++) {
+            List<String> row = parsedRows.get(rowIndex);
+            for (int column = 0; column < row.size(); column++) {
+                if (target.equals(row.get(column))) {
+                    slots.add(rowIndex * 9 + column);
                 }
-                inventorySlot++;
             }
         }
         return slots;

@@ -2,7 +2,6 @@ package org.ayosynk.landClaimPlugin.gui;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.ayosynk.landClaimPlugin.LandClaimPlugin;
 import org.ayosynk.landClaimPlugin.util.FoliaScheduler;
 import org.ayosynk.landClaimPlugin.util.GeyserFormHelper;
@@ -73,16 +72,14 @@ public class ConfirmationGUI {
                         onCancel.run();
                 }));
 
-        Component guiTitle = GuiHelper.MM.deserialize(title);
+        Component guiTitle = GuiHelper.deserialize(title);
         CustomGui gui = new CustomGui(guiTitle, 1);
         gui.fillFromStructure(structure, ingredients);
         gui.open(player);
     }
 
     private static String toPlainText(String text) {
-        Component component = text != null && text.contains("§")
-                ? LegacyComponentSerializer.legacySection().deserialize(text)
-                : GuiHelper.MM.deserialize(text == null ? "" : text);
+        Component component = GuiHelper.deserialize(text);
         return PlainTextComponentSerializer.plainText().serialize(component);
     }
 }

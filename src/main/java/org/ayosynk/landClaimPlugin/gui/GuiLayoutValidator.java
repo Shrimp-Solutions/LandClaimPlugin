@@ -1,6 +1,7 @@
 package org.ayosynk.landClaimPlugin.gui;
 
 import org.ayosynk.landClaimPlugin.LandClaimPlugin;
+import org.ayosynk.landClaimPlugin.gui.framework.GuiLayoutParser;
 
 import java.util.List;
 import java.util.Set;
@@ -17,19 +18,28 @@ final class GuiLayoutValidator {
             return null;
         }
 
+        Set<String> supportedSlots = new java.util.HashSet<>(allowedSlots);
+        supportedSlots.add(".");
+        supportedSlots.add("-");
         int previousCount = 0;
         int nextCount = 0;
         int contentCount = 0;
-        for (int row = 0; row < layout.size(); row++) {
-            String line = layout.get(row);
-            String[] slots = line == null || line.isBlank() ? new String[0] : line.trim().split("\\s+");
-            if (slots.length != 9) {
+        List<List<String>> parsedRows;
+        try {
+            parsedRows = GuiLayoutParser.parseRows(layout.toArray(String[]::new));
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().severe("Invalid " + menuName + " menu layout: " + e.getMessage());
+            return null;
+        }
+        for (int row = 0; row < parsedRows.size(); row++) {
+            List<String> slots = parsedRows.get(row);
+            if (slots.size() != 9) {
                 plugin.getLogger().severe("Invalid " + menuName + " menu layout row " + (row + 1)
-                        + ": each row must contain exactly nine space-separated slots.");
+                        + ": each row must resolve to exactly nine slots.");
                 return null;
             }
             for (String slot : slots) {
-                if (!allowedSlots.contains(slot)) {
+                if (!supportedSlots.contains(slot)) {
                     plugin.getLogger().severe("Invalid " + menuName + " menu layout slot '" + slot
                             + "' in row " + (row + 1) + ".");
                     return null;
@@ -49,10 +59,11 @@ final class GuiLayoutValidator {
     }
 
     static int findSlot(String[] layout, String target) {
-        for (int row = 0; row < layout.length; row++) {
-            String[] slots = layout[row].trim().split("\\s+");
-            for (int column = 0; column < slots.length; column++) {
-                if (slots[column].equals(target)) return row * 9 + column;
+        List<List<String>> parsedRows = GuiLayoutParser.parseRows(layout);
+        for (int row = 0; row < parsedRows.size(); row++) {
+            List<String> slots = parsedRows.get(row);
+            for (int column = 0; column < slots.size(); column++) {
+                if (slots.get(column).equals(target)) return row * 9 + column;
             }
         }
         throw new IllegalStateException("Validated GUI layout is missing slot " + target);

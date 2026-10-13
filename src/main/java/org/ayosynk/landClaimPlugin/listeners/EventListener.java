@@ -161,11 +161,10 @@ public class EventListener implements Listener {
 
             String message;
             if (isClaimed && newProfile != null) {
-                UUID ownerId = claimManager.getChunkOwner(currentPos);
                 String ownerName = newProfile.getColoredOwnerName();
                 String claimName = newProfile.getColoredName();
 
-                if (playerId.equals(ownerId)) {
+                if (newProfile.isOwner(playerId)) {
                     message = configManager.getActionBarMessage("actionbar-owned-by-you")
                             .replace("<claim>", claimName)
                             .replace("<name>", claimName);

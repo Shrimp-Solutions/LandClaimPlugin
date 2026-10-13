@@ -53,7 +53,27 @@ public class ClaimCommand implements LandClaimCommand {
                 .handler(context -> {
                     Player player = context.sender().source();
                     if (!org.ayosynk.landClaimPlugin.gui.GuiHelper.checkPermission(player, "landclaim.claim", plugin)) return;
-                    claimCurrentChunk(player);
+                    FoliaScheduler.runForPlayer(plugin, player, () -> {
+                        ClaimProfile activeProfile = claimManager.getActiveProfile(player);
+                        if (activeProfile == null) {
+                            List<ClaimProfile> ownedProfiles = claimManager.getOwnedProfiles(player.getUniqueId());
+                            if (!ownedProfiles.isEmpty()) {
+                                activeProfile = ownedProfiles.get(0);
+                                org.ayosynk.landClaimPlugin.models.ClaimPlayer claimPlayer =
+                                        plugin.getCacheManager().getPlayerCache().getIfPresent(player.getUniqueId());
+                                if (claimPlayer == null) {
+                                    claimPlayer = new org.ayosynk.landClaimPlugin.models.ClaimPlayer(
+                                            player.getUniqueId());
+                                    plugin.getCacheManager().getPlayerCache().put(player.getUniqueId(), claimPlayer);
+                                }
+                                claimPlayer.setActiveProfileId(activeProfile.getProfileId());
+                                plugin.getDatabaseManager().getPlayerDao().savePlayer(claimPlayer);
+                            } else if (!createProfile(player, nextProfileName(player))) {
+                                return;
+                            }
+                        }
+                        claimCurrentChunk(player);
+                    });
                 }));
 
         // /claim radius <radius>
@@ -77,7 +97,13 @@ public class ClaimCommand implements LandClaimCommand {
                     toggleAutoClaim(player);
                 }));
 
-        // /claim visible
+        // /claim view (visible remains as a compatibility alias)
+        manager.command(claimBuilder.literal("view")
+                .handler(context -> {
+                    Player player = context.sender().source();
+                    if (!org.ayosynk.landClaimPlugin.gui.GuiHelper.checkPermission(player, "landclaim.visible", plugin)) return;
+                    toggleVisibility(player);
+                }));
         manager.command(claimBuilder.literal("visible")
                 .handler(context -> {
                     Player player = context.sender().source();
@@ -107,6 +133,13 @@ public class ClaimCommand implements LandClaimCommand {
                     if (!org.ayosynk.landClaimPlugin.gui.GuiHelper.checkPermission(player, "landclaim.toggle", plugin)) return;
                     String mode = (String) context.get("mode");
                     toggleVisualizationMode(player, mode);
+                }));
+        manager.command(claimBuilder.literal("viewmode")
+                .required("mode", StringParser.stringParser(), VisualizationModeSuggestions.modes())
+                .handler(context -> {
+                    Player player = context.sender().source();
+                    if (!org.ayosynk.landClaimPlugin.gui.GuiHelper.checkPermission(player, "landclaim.toggle", plugin)) return;
+                    toggleVisualizationMode(player, context.get("mode"));
                 }));
 
         // /claim create <name>
@@ -191,8 +224,12 @@ public class ClaimCommand implements LandClaimCommand {
 
         // /claim tp "<claim-owner-name>" "<claim>"
         manager.command(claimBuilder.literal("tp")
-                .required("owner", StringParser.stringParser())
-                .required("claim", StringParser.stringParser())
+                .required("owner", StringParser.stringParser(), (context, input) ->
+                        java.util.concurrent.CompletableFuture.completedFuture(
+                                profileOwnerSuggestions(input.remainingInput())))
+                .required("claim", StringParser.stringParser(), (context, input) ->
+                        java.util.concurrent.CompletableFuture.completedFuture(
+                                profileNameSuggestions(context.get("owner"), input.remainingInput())))
                 .handler(context -> {
                     Player player = context.sender().source();
                     if (!org.ayosynk.landClaimPlugin.gui.GuiHelper.checkPermission(
@@ -200,18 +237,19 @@ public class ClaimCommand implements LandClaimCommand {
                     String ownerName = context.get("owner");
                     String profileName = context.get("claim");
                     FoliaScheduler.runForPlayer(plugin, player,
-                            () -> teleportToProfileSpawnpoint(player, ownerName, profileName));
+                            () -> teleportToClaimProfileSpawnpoint(player, ownerName, profileName, false));
                 }));
 
-        // /claim profiles
+        // /claim profiles and /claim list open the same owned/member profile selector.
         manager.command(claimBuilder.literal("profiles")
                 .handler(context -> {
                     Player player = context.sender().source();
-                    if (!configManager.isMultiProfilesEnabled()) {
-                        player.sendMessage(configManager.getMessage("multi-profiles-disabled"));
-                        return;
-                    }
-                    FoliaScheduler.runForPlayer(plugin, player, () -> org.ayosynk.landClaimPlugin.gui.ProfileSelectorGUI.open(player, plugin));
+                    openProfileList(player);
+                }));
+        manager.command(claimBuilder.literal("list")
+                .handler(context -> {
+                    Player player = context.sender().source();
+                    openProfileList(player);
                 }));
 
         // /claim reload (Console + Player)
@@ -310,14 +348,18 @@ public class ClaimCommand implements LandClaimCommand {
                     Player player = context.sender().source();
                     if (!org.ayosynk.landClaimPlugin.gui.GuiHelper.checkPermission(player, "landclaim.color", plugin)) return;
                     String color = context.get("color");
-                    FoliaScheduler.runForPlayer(plugin, player, () -> changeClaimColor(player, color));
+                    FoliaScheduler.runForPlayer(plugin, player, () -> {
+                        changeClaimColor(player, color);
+                    });
                 }));
 
-        // ========== /claim visualization <mode> — alias for /claim toggle ==========
+        // ========== /claim visualization <mode> — compatibility alias for /claim viewmode ==========
         manager.command(claimBuilder.literal("visualization")
                 .required("mode", StringParser.stringParser(), VisualizationModeSuggestions.modes())
                 .handler(context -> {
                     Player player = context.sender().source();
+                    if (!org.ayosynk.landClaimPlugin.gui.GuiHelper.checkPermission(
+                            player, "landclaim.toggle", plugin)) return;
                     String mode = (String) context.get("mode");
                     toggleVisualizationMode(player, mode);
                 }));
@@ -393,19 +435,18 @@ public class ClaimCommand implements LandClaimCommand {
         org.ayosynk.landClaimPlugin.models.ClaimProfile profile = claimManager.getProfileAt(pos);
 
         String message;
-        UUID playerId = player.getUniqueId();
 
         if (profile != null) {
-            UUID ownerId = claimManager.getChunkOwner(pos);
             String ownerName = profile.getColoredOwnerName();
             String claimName = profile.getColoredName();
 
-            if (playerId.equals(ownerId)) {
+            if (profile.isOwner(player.getUniqueId())) {
                 message = configManager.getActionBarMessage("actionbar-owned-by-you")
                         .replace("<claim>", claimName)
                         .replace("<name>", claimName);
             } else {
-                String status = org.ayosynk.landClaimPlugin.managers.PermissionResolver.getPlayerStatus(profile, playerId);
+                String status = org.ayosynk.landClaimPlugin.managers.PermissionResolver.getPlayerStatus(
+                        profile, player.getUniqueId());
                 if (status.equals("resident") || status.equals("trusted")) {
                     message = configManager.getActionBarMessage("actionbar-trusted")
                             .replace("<owner>", ownerName)
@@ -430,36 +471,39 @@ public class ClaimCommand implements LandClaimCommand {
         player.sendActionBar(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(message));
     }
 
-    private void createProfile(Player player, String name) {
+    private boolean createProfile(Player player, String name) {
         UUID playerId = player.getUniqueId();
+        if (name == null || name.isBlank()) {
+            name = nextProfileName(player);
+        }
 
         if (!claimManager.canCreateProfile(playerId)) {
             player.sendMessage(configManager.getMessage("cannot-claim-as-member"));
-            return;
+            return false;
         }
 
         if (!configManager.isMultiProfilesEnabled()) {
             ClaimProfile existing = claimManager.getProfile(playerId);
             if (existing != null) {
                 player.sendMessage(configManager.getMessage("already-has-profile"));
-                return;
+                return false;
             }
         } else {
             java.util.List<ClaimProfile> owned = claimManager.getOwnedProfiles(playerId);
-            if (owned.size() >= configManager.getMaxProfilesPerPlayer() && !player.hasPermission("landclaim.admin")) {
-                player.sendMessage(configManager.getMessage("profile-limit-reached", "<limit>", String.valueOf(configManager.getMaxProfilesPerPlayer())));
-                return;
+            if (owned.size() >= configManager.getMaxProfiles(player) && !player.hasPermission("landclaim.admin")) {
+                player.sendMessage(configManager.getMessage("profile-limit-reached", "<limit>", String.valueOf(configManager.getMaxProfiles(player))));
+                return false;
             }
         }
 
         if (configManager.isBannedClaimName(name)) {
             player.sendMessage(configManager.getMessage("banned-claim-name"));
-            return;
+            return false;
         }
 
         if (!claimManager.isClaimNameUnique(name)) {
             player.sendMessage(configManager.getMessage("name-already-in-use"));
-            return;
+            return false;
         }
 
         UUID profileId = configManager.isMultiProfilesEnabled() ? UUID.randomUUID() : playerId;
@@ -469,12 +513,124 @@ public class ClaimCommand implements LandClaimCommand {
 
         // Set as active
         org.ayosynk.landClaimPlugin.models.ClaimPlayer cp = plugin.getCacheManager().getPlayerCache().getIfPresent(playerId);
-        if (cp != null) {
-            cp.setActiveProfileId(profileId);
-            plugin.getDatabaseManager().getPlayerDao().savePlayer(cp);
+        if (cp == null) {
+            cp = new org.ayosynk.landClaimPlugin.models.ClaimPlayer(playerId);
+            plugin.getCacheManager().getPlayerCache().put(playerId, cp);
         }
+        cp.setActiveProfileId(profileId);
+        plugin.getDatabaseManager().getPlayerDao().savePlayer(cp);
 
         player.sendMessage(configManager.getMessage("profile-created", "<name>", name));
+        return true;
+    }
+
+    private String nextProfileName(Player player) {
+        int suffix = 1;
+        while (!claimManager.isClaimNameUnique("claim-" + suffix)) {
+            suffix++;
+        }
+        return "claim-" + suffix;
+    }
+
+    private void openProfileList(Player player) {
+        if (!configManager.isMultiProfilesEnabled()) {
+            player.sendMessage(configManager.getMessage("multi-profiles-disabled"));
+            return;
+        }
+        FoliaScheduler.runForPlayer(plugin, player,
+                () -> ProfileSelectorGUI.open(player, plugin));
+    }
+
+    List<org.incendo.cloud.suggestion.Suggestion> profileOwnerSuggestions(String input) {
+        String query = input == null ? "" : input;
+        return claimManager.getAllProfiles().stream()
+                .flatMap(profile -> java.util.stream.Stream.of(
+                        profile.getDisplayOwnerName(),
+                        Bukkit.getOfflinePlayer(profile.getOwnerId()).getName()))
+                .filter(java.util.Objects::nonNull)
+                .filter(name -> name.regionMatches(true, 0, query, 0, query.length()))
+                .distinct()
+                .map(org.incendo.cloud.suggestion.Suggestion::suggestion)
+                .toList();
+    }
+
+    List<org.incendo.cloud.suggestion.Suggestion> profileNameSuggestions(
+            String ownerName, String input) {
+        String query = input == null ? "" : input;
+        return claimManager.getAllProfiles().stream()
+                .filter(profile -> profileOwnerMatches(profile, ownerName))
+                .map(ClaimProfile::getName)
+                .filter(java.util.Objects::nonNull)
+                .filter(name -> name.regionMatches(true, 0, query, 0, query.length()))
+                .map(org.incendo.cloud.suggestion.Suggestion::suggestion)
+                .toList();
+    }
+
+    private boolean profileOwnerMatches(ClaimProfile profile, String ownerName) {
+        if (ownerName == null || ownerName.isBlank()) {
+            return false;
+        }
+        String displayName = profile.getDisplayOwnerName();
+        String username = Bukkit.getOfflinePlayer(profile.getOwnerId()).getName();
+        return ownerName.equalsIgnoreCase(displayName)
+                || (username != null && ownerName.equalsIgnoreCase(username));
+    }
+
+    public void teleportToClaimProfileSpawnpoint(Player player, String ownerName, String profileName,
+            boolean adminBypass) {
+        ClaimProfile profile = claimManager.getAllProfiles().stream()
+                .filter(candidate -> profileOwnerMatches(candidate, ownerName))
+                .filter(candidate -> candidate.getName() != null
+                        && candidate.getName().equalsIgnoreCase(profileName))
+                .findFirst()
+                .orElse(null);
+        if (profile == null) {
+            player.sendMessage(configManager.getMessage("profile-spawnpoint-not-found"));
+            return;
+        }
+        teleportToClaimProfileSpawnpoint(player, profile, adminBypass);
+    }
+
+    public void teleportToActiveProfileSpawnpoint(Player player, ClaimProfile profile) {
+        if (!GuiHelper.checkPermission(player, "landclaim.teleport", plugin)) {
+            return;
+        }
+        teleportToClaimProfileSpawnpoint(player, profile, false);
+    }
+
+    private void teleportToClaimProfileSpawnpoint(Player player, ClaimProfile profile,
+            boolean adminBypass) {
+        if (plugin.getCombatManager().isInCombat(player)) {
+            player.sendMessage(configManager.getMessage("in-combat"));
+            return;
+        }
+        UUID playerId = player.getUniqueId();
+        if (profile.isBanned(playerId) && !adminBypass) {
+            player.sendMessage(configManager.getMessage("banned-from-claim",
+                    "<owner>", profile.getDisplayOwnerName()));
+            return;
+        }
+        if (!adminBypass && !profile.isOwner(playerId) && !profile.isMember(playerId)) {
+            player.sendMessage(configManager.getMessage("no-permission"));
+            return;
+        }
+        org.bukkit.Location spawnpoint = profile.getSpawnpoint();
+        if (spawnpoint == null) {
+            player.sendMessage(configManager.getMessage("spawnpoint-not-set"));
+            return;
+        }
+        player.teleportAsync(spawnpoint).whenComplete((teleported, error) ->
+                FoliaScheduler.runForPlayer(plugin, player, () -> {
+                    if (error != null) {
+                        plugin.getLogger().warning("Failed to teleport " + player.getName()
+                                + " to profile " + profile.getProfileId() + ": " + error.getMessage());
+                        player.sendMessage(configManager.getMessage("spawnpoint-teleport-failed"));
+                    } else if (Boolean.TRUE.equals(teleported)) {
+                        player.sendMessage(configManager.getMessage("spawnpoint-teleported"));
+                    } else {
+                        player.sendMessage(configManager.getMessage("spawnpoint-teleport-failed"));
+                    }
+                }));
     }
 
     public void toggleAutoClaim(Player player) {
@@ -545,7 +701,7 @@ public class ClaimCommand implements LandClaimCommand {
     }
 
     private void togglePvp(Player player, boolean enable, Integer time) {
-        FoliaScheduler.runAsync(plugin, () -> {
+        FoliaScheduler.runForPlayer(plugin, player, () -> {
             org.ayosynk.landClaimPlugin.models.ChunkPosition pos = new org.ayosynk.landClaimPlugin.models.ChunkPosition(player.getLocation());
             ClaimProfile profile = claimManager.getProfileAt(pos);
 
@@ -733,7 +889,7 @@ public class ClaimCommand implements LandClaimCommand {
     private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9 ]{3,32}$");
     private static final Pattern HEX_PATTERN = Pattern.compile("^#[0-9A-Fa-f]{6}$");
 
-    // Named color -> hex mapping (same as ChangeClaimColorGUI)
+    // Named color -> hex mapping.
     private static final Map<String, String> NAMED_COLORS = Map.ofEntries(
             Map.entry("black", "#1D1D21"),
             Map.entry("blue", "#3C44AA"),
@@ -860,6 +1016,12 @@ public class ClaimCommand implements LandClaimCommand {
 
         profile.setClaimColor(hex.toUpperCase());
         claimManager.saveAndSync(profile);
+
+        if ("DISPLAY_ENTITY".equals(profile.getVisualizationMode())) {
+            player.sendMessage(GuiHelper.MM.deserialize(
+                    "<yellow>Display Entity borders do not support claim colors on this server. "
+                            + "The color will be saved and shown when using particle visualization."));
+        }
 
         // Refresh native visualization
         plugin.getVisualizationManager().invalidateCache(profile.getProfileId());

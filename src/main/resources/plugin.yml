@@ -1,5 +1,5 @@
 name: moeClaims
-version: "v26.1"
+version: "v26.1.2"
 main: org.ayosynk.landClaimPlugin.LandClaimPlugin
 api-version: "1.21"
 author: rouamy
@@ -30,6 +30,7 @@ permissions:
       landclaim.spawnpoint: true
       landclaim.teleport: true
       landclaim.trust.limit.*: true
+      landclaim.profiles.limit.*: true
       landclaim.update.notify: true
       landclaim.notify: true
   landclaim.notify:
@@ -58,6 +59,9 @@ permissions:
     default: true
   landclaim.limit.*:
     description: All claim limit permissions
+    default: false
+  landclaim.profiles.limit.*:
+    description: Per-rank profile count limit overrides
     default: false
   landclaim.auto:
     description: Use auto-claim feature

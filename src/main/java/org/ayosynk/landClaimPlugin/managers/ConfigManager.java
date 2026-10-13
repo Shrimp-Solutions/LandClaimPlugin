@@ -7,7 +7,9 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.ayosynk.landClaimPlugin.LandClaimPlugin;
 import org.ayosynk.landClaimPlugin.config.MessagesConfig;
+import org.ayosynk.landClaimPlugin.gui.framework.GuiLayoutParser;
 import org.ayosynk.landClaimPlugin.config.PluginConfig;
+import org.ayosynk.landClaimPlugin.config.menus.BannedPlayersConfig;
 import org.ayosynk.landClaimPlugin.config.menus.MainMenuConfig;
 import org.ayosynk.landClaimPlugin.config.menus.ManageMenuConfig;
 import org.ayosynk.landClaimPlugin.config.menus.VisitorManagementConfig;
@@ -20,7 +22,6 @@ import org.ayosynk.landClaimPlugin.config.menus.TitleSettingsConfig;
 import org.ayosynk.landClaimPlugin.config.menus.OnlinePlayerSelectorConfig;
 import org.ayosynk.landClaimPlugin.config.menus.ProfileSelectorConfig;
 import org.ayosynk.landClaimPlugin.config.menus.RenameClaimConfig;
-import org.ayosynk.landClaimPlugin.config.menus.ChangeClaimColorConfig;
 import org.ayosynk.landClaimPlugin.config.menus.TopClaimsConfig;
 import java.io.File;
 import java.util.List;
@@ -41,9 +42,9 @@ public class ConfigManager {
     private PlayerControlPanelConfig playerControlPanelConfig;
     private TitleSettingsConfig titleSettingsConfig;
     private RenameClaimConfig renameClaimConfig;
-    private ChangeClaimColorConfig changeClaimColorConfig;
     private OnlinePlayerSelectorConfig onlinePlayerSelectorConfig;
     private ProfileSelectorConfig profileSelectorConfig;
+    private BannedPlayersConfig bannedPlayersConfig;
 
     private List<String> blockedCommands = List.of();
     private List<String> blockedWorlds = List.of();
@@ -93,6 +94,13 @@ public class ConfigManager {
         this.topClaimsConfig = eu.okaeri.configs.ConfigManager.create(TopClaimsConfig.class, (it) -> {
             it.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
             it.withBindFile(new File(plugin.getDataFolder(), "menus/TopClaims.yml"));
+            it.saveDefaults();
+            it.load();
+        });
+
+        this.bannedPlayersConfig = eu.okaeri.configs.ConfigManager.create(BannedPlayersConfig.class, (it) -> {
+            it.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
+            it.withBindFile(new File(plugin.getDataFolder(), "menus/BannedPlayers.yml"));
             it.saveDefaults();
             it.load();
         });
@@ -184,13 +192,6 @@ public class ConfigManager {
             it.load();
         });
 
-        this.changeClaimColorConfig = eu.okaeri.configs.ConfigManager.create(ChangeClaimColorConfig.class, (it) -> {
-            it.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
-            it.withBindFile(new File(plugin.getDataFolder(), "menus/ChangeClaimColor.yml"));
-            it.saveDefaults();
-            it.load();
-        });
-
         this.onlinePlayerSelectorConfig = eu.okaeri.configs.ConfigManager.create(OnlinePlayerSelectorConfig.class, (it) -> {
             it.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
             it.withBindFile(new File(plugin.getDataFolder(), "menus/OnlinePlayerSelector.yml"));
@@ -211,6 +212,7 @@ public class ConfigManager {
         normalizeLegacyMainMenuLabels();
         normalizeMainMenuLayout();
         topClaimsConfig.load();
+        bannedPlayersConfig.load();
         manageMenuConfig.load();
         visitorManagementConfig.load();
         claimSettingsConfig.load();
@@ -221,7 +223,6 @@ public class ConfigManager {
         playerControlPanelConfig.load();
         titleSettingsConfig.load();
         renameClaimConfig.load();
-        changeClaimColorConfig.load();
         onlinePlayerSelectorConfig.load();
 
         blockedCommands = pluginConfig.blockCmd.stream().map(String::toLowerCase).toList();
@@ -242,44 +243,68 @@ public class ConfigManager {
     }
 
     private void normalizeMainMenuLayout() {
-        if (mainMenuConfig.layout == null || mainMenuConfig.layout.stream()
-                .filter(java.util.Objects::nonNull)
-                .flatMap(row -> java.util.Arrays.stream(row.trim().split("\\s+")))
-                .anyMatch("C"::equals)) {
+        if (mainMenuConfig.layout == null) {
             return;
         }
         List<String> rows = new java.util.ArrayList<>(mainMenuConfig.layout);
-        boolean placed = false;
-        for (int rowIndex = 0; rowIndex < rows.size() && !placed; rowIndex++) {
-            String[] slots = rows.get(rowIndex).trim().split("\\s+");
-            for (int slotIndex = 0; slotIndex < slots.length; slotIndex++) {
-                if (".".equals(slots[slotIndex])) {
-                    slots[slotIndex] = "C";
-                    rows.set(rowIndex, String.join(" ", slots));
-                    placed = true;
-                    break;
+        boolean changed = ensureMainMenuButton(rows, "C");
+        changed |= ensureMainMenuButton(rows, "B");
+        changed |= ensureMainMenuButton(rows, "P");
+        if (changed) {
+            mainMenuConfig.layout = rows;
+        }
+    }
+
+    private boolean ensureMainMenuButton(List<String> rows, String button) {
+        List<List<String>> parsedRows;
+        try {
+            parsedRows = GuiLayoutParser.parseRows(rows.toArray(String[]::new));
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Could not normalize main menu layout for button " + button + ": "
+                    + e.getMessage());
+            return false;
+        }
+        if (parsedRows.stream().flatMap(List::stream).anyMatch(button::equals)) {
+            return false;
+        }
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            List<String> slots = parsedRows.get(rowIndex);
+            for (int slotIndex = 0; slotIndex < slots.size(); slotIndex++) {
+                if (".".equals(slots.get(slotIndex)) || "-".equals(slots.get(slotIndex))) {
+                    slots.set(slotIndex, button);
+                    rows.set(rowIndex, GuiLayoutParser.encodeRow(slots));
+                    plugin.getLogger().info("Added the " + mainMenuButtonName(button)
+                            + " button to the first free main menu slot.");
+                    return true;
                 }
             }
         }
-        for (int rowIndex = 0; rowIndex < rows.size() && !placed; rowIndex++) {
-            String[] slots = rows.get(rowIndex).trim().split("\\s+");
-            for (int slotIndex = 0; slotIndex < slots.length; slotIndex++) {
-                if ("1".equals(slots[slotIndex]) || "2".equals(slots[slotIndex])) {
-                    slots[slotIndex] = "C";
-                    rows.set(rowIndex, String.join(" ", slots));
-                    plugin.getLogger().warning(
-                            "Added the Top Claims button to the first available filler slot in the main menu layout.");
-                    placed = true;
-                    break;
+        for (int rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+            List<String> slots = parsedRows.get(rowIndex);
+            for (int slotIndex = 0; slotIndex < slots.size(); slotIndex++) {
+                if ("1".equals(slots.get(slotIndex)) || "2".equals(slots.get(slotIndex))) {
+                    slots.set(slotIndex, button);
+                    rows.set(rowIndex, GuiLayoutParser.encodeRow(slots));
+                    plugin.getLogger().warning("Added the "
+                            + mainMenuButtonName(button)
+                            + " button over a filler slot in the main menu layout.");
+                    return true;
                 }
             }
         }
-        if (!placed) {
-            plugin.getLogger().warning(
-                    "The main menu layout has no free slot for Top Claims; add a C slot to menus/mainmenu.yml.");
-            return;
-        }
-        mainMenuConfig.layout = rows;
+        plugin.getLogger().warning("The main menu layout has no free slot for "
+                + mainMenuButtonName(button)
+                + "; add a " + button + " slot to menus/mainmenu.yml.");
+        return false;
+    }
+
+    private String mainMenuButtonName(String button) {
+        return switch (button) {
+            case "C" -> "Top Claims";
+            case "B" -> "Banned Players";
+            case "P" -> "Profiles";
+            default -> button;
+        };
     }
 
     private void normalizeLegacyFlagLayout() {
@@ -342,6 +367,10 @@ public class ConfigManager {
         return topClaimsConfig;
     }
 
+    public BannedPlayersConfig getBannedPlayersConfig() {
+        return bannedPlayersConfig;
+    }
+
     public ManageMenuConfig getManageMenuConfig() {
         return manageMenuConfig;
     }
@@ -397,10 +426,6 @@ public class ConfigManager {
         return limit;
     }
 
-    public ChangeClaimColorConfig getChangeClaimColorConfig() {
-        return changeClaimColorConfig;
-    }
-
     public ProfileSelectorConfig getProfileSelectorConfig() {
         return profileSelectorConfig;
     }
@@ -437,6 +462,30 @@ public class ConfigManager {
 
     public int getMaxProfilesPerPlayer() {
         return pluginConfig.maxProfilesPerPlayer;
+    }
+
+    public int getMaxProfiles(org.bukkit.entity.Player player) {
+        return resolveMaxProfiles(getMaxProfilesPerPlayer(), player.getEffectivePermissions().stream()
+                .filter(org.bukkit.permissions.PermissionAttachmentInfo::getValue)
+                .map(org.bukkit.permissions.PermissionAttachmentInfo::getPermission)
+                .toList());
+    }
+
+    static int resolveMaxProfiles(int configuredLimit, Iterable<String> permissionNodes) {
+        int maxProfiles = configuredLimit;
+        String permissionPrefix = "landclaim.profiles.limit.";
+        for (String permissionNode : permissionNodes) {
+            if (!permissionNode.startsWith(permissionPrefix)) {
+                continue;
+            }
+            String limitText = permissionNode.substring(permissionPrefix.length());
+            try {
+                maxProfiles = Math.max(maxProfiles, Integer.parseInt(limitText));
+            } catch (NumberFormatException ignored) {
+                // Invalid numeric permission suffixes do not override the configured limit.
+            }
+        }
+        return maxProfiles;
     }
 
     public int getUnstuckCooldown() {

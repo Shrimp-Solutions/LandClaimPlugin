@@ -31,7 +31,7 @@ A: If `requireConnectedClaims` is enabled and a player breaks the block connecti
 **Q: Are members restricted from creating their own profiles?**
 A: 
 - **Single-Profile Mode:** Yes, players can only be an owner OR a member. If they are a member of another claim, they cannot create their own.
-- **Multi-Profile Mode:** No, players can create their own profiles even if they are already members of other players' claims (up to the `maxProfilesPerPlayer` limit).
+- **Multi-Profile Mode:** No, players can create their own profiles even if they are already members of other players' claims. `maxProfilesPerPlayer` is the default cap; `landclaim.profiles.limit.<n>` raises it to the highest granted numeric value, and `landclaim.admin` bypasses the cap.
 
 **Q: Does `/claim unstuck` work everywhere?**
 A: `/claim unstuck` only works when a player is trapped inside a claim (either their own or someone else's). It uses an asynchronous Breadth-First Search (BFS) algorithm to find the nearest safe wilderness block without teleporting them into walls or lava. It respects a configurable cooldown to prevent abuse during combat.
@@ -110,5 +110,4 @@ A: Use `/claim admin add chunk <player> <amount>`.
 - **With Citizens 2:** Spawn your NPC (`/npc create "Surveyor" --type player`) and link it to your DeluxeMenus shop (`/npc command add -p "claimshop"`). If you want the NPC to grant chunks directly via console command, use `/npc command add -c "claim admin add chunk <p> 1"`. Both `<p>` (Citizens placeholder) and `@p` (Minecraft selector) are supported.
 
 See the full [Integrations Guide](/guide/integrations) for complete copy-paste configuration examples and command setups.
-
 

@@ -128,17 +128,17 @@ public class LandClaimExpansion extends PlaceholderExpansion {
                 ChunkPosition pos = new ChunkPosition(p.getLocation());
                 ClaimProfile profile = plugin.getClaimManager().getProfileAt(pos);
                 if (profile != null) {
-                    return switch (org.ayosynk.landClaimPlugin.managers.PermissionResolver
+                    return localizedRole(switch (org.ayosynk.landClaimPlugin.managers.PermissionResolver
                             .getPlayerStatus(profile, p.getUniqueId())) {
-                        case "owner" -> "Owner";
-                        case "resident" -> "Resident";
-                        case "trusted" -> "Trusted";
-                        case "banned" -> "Banned";
-                        default -> "Visitor";
-                    };
+                        case "owner" -> "owner";
+                        case "resident" -> "resident";
+                        case "trusted" -> "trusted";
+                        case "banned" -> "banned";
+                        default -> "visitor";
+                    });
                 }
             }
-            return "Visitor";
+            return localizedRole("visitor");
         }
 
         // %landclaim_world% - world name at current location
@@ -202,5 +202,9 @@ public class LandClaimExpansion extends PlaceholderExpansion {
         }
 
         return null;
+    }
+
+    private String localizedRole(String role) {
+        return plugin.getConfigManager().getRawMessage("placeholder-role-" + role);
     }
 }
